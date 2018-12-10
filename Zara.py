@@ -7,9 +7,6 @@ import json
 import pandas as pd
 import os
 import time
-from flask import Flask
-
-app = Flask(__name__)
 
 URL_ZARA_HOME = "https://www.zara.com/uk/"
 
@@ -110,8 +107,4 @@ def parse_zara():
     df = pd.concat(df_list)
     df.to_csv(os.path.join(DIRECTORY_TMP, "zara.csv"))
 
-
-@app.route("/")
-def parse():
-    # parse_zara()
-    return "Done!"
+parse_zara()
