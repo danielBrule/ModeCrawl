@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import time
 from flask import Flask
+
 app = Flask(__name__)
 
 URL_ZARA_HOME = "https://www.zara.com/uk/"
@@ -92,14 +93,15 @@ def get_inventory(url: str):
 
                 except Exception as err:
                     i += 1
-                    print("{}/{} : {}".format(i, len(data["productGroups"][0]["products"]),err))
-            return(pd.DataFrame(products))
+                    print("{}/{} : {}".format(i, len(data["productGroups"][0]["products"]), err))
+            return (pd.DataFrame(products))
     except Exception:
         print("URL EXCEPTION: {}".format(url))
         return None
 
     results = html.findAll(name="")
     print(len(results))
+
 
 def parse_zara():
     list_url = get_categories()
