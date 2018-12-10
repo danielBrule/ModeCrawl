@@ -10,10 +10,6 @@ import datetime
 URL_ZARA_HOME = "https://www.zara.com/uk/"
 
 DIRECTORY_TMP = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
-FILE_ZARA_HOME = "zara_home.html"
-
-
-
 
 
 def get_categories() -> []:
@@ -30,7 +26,7 @@ def get_categories() -> []:
             try:
                 output.append(result.find("a")["data-href"])
             except:
-                print(result)
+                print("error: {}".format(result))
     return output
 
 
@@ -87,7 +83,8 @@ def parse_zara():
 
     df_list = [get_inventory(x) for x in list_url]
     df = pd.concat(df_list)
-    now = datetime.date.now()
+    now = datetime.datetime.now()
     df.to_csv(os.path.join(DIRECTORY_TMP, "zara_{}-{}-{}.csv".format(now.year, now.month, now.day)))
+
 
 parse_zara()
