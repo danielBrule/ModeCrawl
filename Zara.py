@@ -1,12 +1,11 @@
-import requests
-from requests.exceptions import RequestException
-from contextlib import closing
+from Parser.Utils import *
 from bs4 import BeautifulSoup
 import re
 import json
 import pandas as pd
 import os
 import time
+import datetime
 
 URL_ZARA_HOME = "https://www.zara.com/uk/"
 
@@ -14,24 +13,7 @@ DIRECTORY_TMP = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
 FILE_ZARA_HOME = "zara_home.html"
 
 
-def is_good_response(resp):
-    content_type = resp.headers['Content-Type'].lower()
-    return (resp.status_code == 200
-            and content_type is not None
-            and content_type.find('html') > -1)
 
-
-def simple_get(url):
-    try:
-        with closing(requests.get(url, stream=True)) as resp:
-            if is_good_response(resp):
-                return resp.content
-            else:
-                return None
-
-    except RequestException as e:
-        print('Error during requests to {0} : {1}'.format(url, str(e)))
-        return None
 
 
 def get_categories() -> []:
@@ -105,6 +87,7 @@ def parse_zara():
 
     df_list = [get_inventory(x) for x in list_url]
     df = pd.concat(df_list)
-    df.to_csv(os.path.join(DIRECTORY_TMP, "zara.csv"))
+    now = datetime.date.now()
+    df.to_csv(os.path.join(DIRECTORY_TMP, "zara_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
 parse_zara()
