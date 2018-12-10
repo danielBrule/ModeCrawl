@@ -111,5 +111,5 @@ def parse_zara():
 
 @app.route("/")
 def parse():
-    parse_zara()
+    # parse_zara()
     return "Done!"
