@@ -9,8 +9,6 @@ import datetime
 
 URL_ZARA_HOME = "https://www.zara.com/uk/"
 
-DIRECTORY_TMP = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
-
 
 def get_categories() -> []:
     raw_html = simple_get(URL_ZARA_HOME)
@@ -65,22 +63,20 @@ def get_inventory(url: str):
                                          "taxo1": node["sectionName"],
                                          "taxo2": node["familyName"],
                                          "taxo3": node["subfamilyName"]})
-
                 except Exception as err:
                     i += 1
                     print("{}/{} : {}".format(i, len(data["productGroups"][0]["products"]), err))
-            return (pd.DataFrame(products))
+
     except Exception:
         print("URL EXCEPTION: {}".format(url))
         return None
-
-    results = html.findAll(name="")
-    print(len(results))
+    return (pd.DataFrame(products))
 
 
 def parse_zara():
+    # get url to analyse
     list_url = get_categories()
-
+    # get inventory
     df_list = [get_inventory(x) for x in list_url]
     df = pd.concat(df_list)
     now = datetime.datetime.now()
