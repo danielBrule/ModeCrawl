@@ -7,7 +7,7 @@ import datetime
 import json
 import time
 
-URL_NEWLOOK_CATEGORIES = ""#https://www.newlook.com/uk/sitemap/maps/sitemap_uk_category_en_1.xml"
+URL_NEWLOOK_CATEGORIES = "https://www.newlook.com/uk/sitemap/maps/sitemap_uk_category_en_1.xml"
 
 def get_categories() -> pd.DataFrame:
     data = simple_get(URL_NEWLOOK_CATEGORIES)
