@@ -41,17 +41,17 @@ def get_categories() -> []:
     return output
 
 
-def get_inventory(taxo1, taxo2, taxo3, url):
-    print("Category: {}".format(url))
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
+    print("{} - Category: {}".format(Shop.HM.name, url))
     try:
         raw_html = simple_get(url)
         html = BeautifulSoup(raw_html, 'html.parser')
 
         results = html.findAll(name="form", attrs={"class": "js-product-filter-form"})
         if len(results) > 1:
-            print("error : {}".format(results))
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="more than one node: {}".results)
         if len(results) == 0:
-            print("Empty node")
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="empty node")
             return None
         json_url = "https://www2.hm.com" + results[0].attrs["data-filtered-products-url"]
         data = simple_get(json_url)
@@ -59,30 +59,47 @@ def get_inventory(taxo1, taxo2, taxo3, url):
 
         products = []
         for node in data["products"]:
-            products.append({"shop": "HM",
-                             "id": node["articleCode"],
-                             "reference": None,
-                             "name": node["title"],
-                             "price": node["price"][1:],
-                             "taxo1": taxo1,
-                             "taxo2": taxo2,
-                             "taxo3": taxo3})
-        return (pd.DataFrame(products))
+            try:
+                products.append({"shop": "HM",
+                                 "id": node["articleCode"],
+                                 "reference": None,
+                                 "name": node["title"],
+                                 "price": node["price"][1:],
+                                 "inStock": True if node["outOfStockText"] == "" else False,
+                                 "taxo1": taxo1,
+                                 "taxo2": taxo2,
+                                 "taxo3": taxo3,
+                                 "url": "https://www2.hm.com/" + node["/en_gb/productpage.0663986003.html"],
+                                 "date": datetime.datetime.now()})
+            except Exception as ex:
+                log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=ex)
+        return pd.DataFrame(products)
+
     except Exception as ex:
-        print("Excetion on {}: {}".format(url, ex))
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.HM, message=ex)
     return None
 
+
 def parse_primark():
-    # get url to analyse
-    df_url = get_categories()
-    df_list = [get_inventory(taxo1=row["taxo1"],
-                             taxo2=row["taxo2"],
-                             taxo3=row["taxo3"],
-                             url=row["URL"])
-               for index, row in df_url.iterrows()]
+    try:
+        df_url = get_categories()
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.HM, message=ex)
+        return
+
+    try:
+        df_list = [get_inventory(taxo1=row["taxo1"],
+                                 taxo2=row["taxo2"],
+                                 taxo3=row["taxo3"],
+                                 url=row["URL"])
+                   for index, row in df_url.iterrows()]
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.HM, message=ex)
+        return
+
     df = pd.concat(df_list)
     now = datetime.datetime.now()
-    df.to_csv(os.path.join(DIRECTORY_TMP, "hm_{}-{}-{}.csv".format(now.year, now.month, now.day)))
+    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "hm_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
 
 parse_primark()

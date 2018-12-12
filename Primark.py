@@ -5,11 +5,8 @@ import xml.etree.ElementTree as ET
 import os
 import datetime
 import json
-import time
 
 URL_PRIMARK_HOME = "https://www.primark.com/en/products"
-
-
 
 
 def get_categories() -> pd.DataFrame:
@@ -69,48 +66,62 @@ def get_categories() -> pd.DataFrame:
 
 def get_inventory(taxo1, taxo2, taxo3, category):
     print("Category: {}".format(category))
-    time.sleep(1)
+    try:
 
-    products = []
-    i = 1
-    while True:
-        data = simple_get("https://m.primark.com/admin/productsapi/search//{}/{}".format(category, i))
-        i += 1
-        time.sleep(1)
-        if data is None:
-            break;
-        data = json.loads(data)
+        products = []
+        i = 1
+        while True:
+            data = simple_get("https://m.primark.com/admin/productsapi/search/{}/{}".format(category, i))
+            i += 1
+            if data is None:
+                break;
+            data = json.loads(data)
 
-        if len(data["Products"]) == 0:
-            break
+            if len(data["Products"]) == 0:
+                break
 
-        for node in data["Products"]:
-            products.append({"shop": "Primark",
-                             "id": node["BusinessId"],
-                             "reference": node["Sku"],
-                             "name": node["Title"],
-                             "price": int(node["PriceInteger"]) * 100 + int(node["PriceDecimal"]),
-                             "taxo1": taxo1,
-                             "taxo2": taxo2,
-                             "taxo3": taxo3})
-    return (pd.DataFrame(products))
+            for node in data["Products"]:
+                try:
+                    products.append({"shop": "Primark",
+                                     "id": node["BusinessId"],
+                                     "reference": node["Sku"],
+                                     "name": node["Title"],
+                                     "price": int(node["PriceInteger"]) * 100 + int(node["PriceDecimal"]),
+                                     "inStock": True,
+                                     "taxo1": taxo1,
+                                     "taxo2": taxo2,
+                                     "taxo3": taxo3,
+                                     "url": "",
+                                     "date": datetime.datetime.now()})
+                except Exception as ex:
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.PRIMARK, message=ex)
+        return pd.DataFrame(products)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.PRIMARK, message=ex)
+    return None
 
 
 def parse_primark():
-    # get url to analyse
-    df_url = get_categories()
-    df_url = df_url[df_url.taxo1.isin(["men", "women", "kids"])]
-    #  get inventory
+    try:
+        df_url = get_categories()
+        df_url = df_url[df_url.taxo1.isin(["men", "women", "kids"])]
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.PRIMARK, message=ex)
+        return
 
-    df_list = [get_inventory(taxo1=row["taxo1"],
-                             taxo2=row["taxo2"],
-                             taxo3=row["taxo3"],
-                             category=row["category"])
-               for index, row in df_url.iterrows()]
+    try:
+        df_list = [get_inventory(taxo1=row["taxo1"],
+                                 taxo2=row["taxo2"],
+                                 taxo3=row["taxo3"],
+                                 category=row["category"])
+                   for index, row in df_url.iterrows()]
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.PRIMARK, message=ex)
+        return
 
     df = pd.concat(df_list)
     now = datetime.datetime.now()
-    df.to_csv(os.path.join(DIRECTORY_TMP, "primark_{}-{}-{}.csv".format(now.year, now.month, now.day)))
+    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "primark_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
 
 parse_primark()

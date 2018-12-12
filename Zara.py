@@ -19,17 +19,15 @@ def get_categories() -> []:
     for result in results:
         try:
             output.append(result.find("a")["href"])
-            # print(result)
         except:
             try:
                 output.append(result.find("a")["data-href"])
-            except:
-                print("error: {}".format(result))
+            except Exception as ex:
+                log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message="Invalid category".format(ex))
     return output
 
 
 def get_inventory(url: str):
-    time.sleep(1)
     print(url)
     raw_html = simple_get(url)
     html = BeautifulSoup(raw_html, 'html.parser')
@@ -42,45 +40,54 @@ def get_inventory(url: str):
             data = json.loads(data)
 
             products = []
-            i = 0
             for node in data["productGroups"][0]["products"]:
                 try:
                     if "price" in node:
-                        products.append({"shop": "Zara",
-                                         "id": node["id"],
-                                         "reference": node["detail"]["reference"],
-                                         "name": node["name"],
-                                         "price": node["price"],
-                                         "taxo1": node["sectionName"],
-                                         "taxo2": node["familyName"],
-                                         "taxo3": node["subfamilyName"]})
+                        products.append(add_in_dictionary(shop=Shop.ZARA,
+                                                          obj_id=node["id"],
+                                                          reference=node["detail"]["reference"],
+                                                          name=node["name"],
+                                                          price=node["price"],
+                                                          in_stock=True,
+                                                          taxo1=node["sectionName"],
+                                                          taxo2=node["familyName"],
+                                                          taxo3=node["subfamilyName"],
+                                                          url=""))
                     else:
-                        products.append({"shop": "Zara",
-                                         "id": node["id"],
-                                         "reference": node["detail"]["reference"],
-                                         "name": node["bundleProductSummaries"][0]["name"],
-                                         "price": node["bundleProductSummaries"][0]["price"],
-                                         "taxo1": node["sectionName"],
-                                         "taxo2": node["familyName"],
-                                         "taxo3": node["subfamilyName"]})
-                except Exception as err:
-                    i += 1
-                    print("{}/{} : {}".format(i, len(data["productGroups"][0]["products"]), err))
+                        products.append(add_in_dictionary(shop=Shop.ZARA,
+                                                          obj_id=node["id"],
+                                                          reference=node["detail"]["reference"],
+                                                          name=node["bundleProductSummaries"][0]["name"],
+                                                          price=node["bundleProductSummaries"][0]["price"],
+                                                          in_stock=True,
+                                                          taxo1=node["sectionName"],
+                                                          taxo2=node["familyName"],
+                                                          taxo3=node["subfamilyName"],
+                                                          url=""))
+                except Exception as ex:
+                    log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message=ex)
 
-    except Exception:
-        print("URL EXCEPTION: {}".format(url))
+    except Exception as ex:
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message=ex)
         return None
-    return (pd.DataFrame(products))
+    return pd.DataFrame(products)
 
 
 def parse_zara():
-    # get url to analyse
-    list_url = get_categories()
-    # get inventory
-    df_list = [get_inventory(x) for x in list_url]
+    try:
+        list_url = get_categories()
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ZARA, message=ex)
+        return
+
+    try:
+        df_list = [get_inventory(x) for x in list_url]
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ZARA, message=ex)
+        return
     df = pd.concat(df_list)
     now = datetime.datetime.now()
-    df.to_csv(os.path.join(DIRECTORY_TMP, "zara_{}-{}-{}.csv".format(now.year, now.month, now.day)))
+    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "zara_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
 
 parse_zara()
