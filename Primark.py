@@ -74,7 +74,7 @@ def get_inventory(taxo1, taxo2, taxo3, category):
             data = simple_get("https://m.primark.com/admin/productsapi/search/{}/{}".format(category, i))
             i += 1
             if data is None:
-                break;
+                break
             data = json.loads(data)
 
             if len(data["Products"]) == 0:
@@ -82,17 +82,16 @@ def get_inventory(taxo1, taxo2, taxo3, category):
 
             for node in data["Products"]:
                 try:
-                    products.append({"shop": "Primark",
-                                     "id": node["BusinessId"],
-                                     "reference": node["Sku"],
-                                     "name": node["Title"],
-                                     "price": int(node["PriceInteger"]) * 100 + int(node["PriceDecimal"]),
-                                     "inStock": True,
-                                     "taxo1": taxo1,
-                                     "taxo2": taxo2,
-                                     "taxo3": taxo3,
-                                     "url": "",
-                                     "date": datetime.datetime.now()})
+                    products.append(add_in_dictionary(shop=Shop.PRIMARK,
+                                                      obj_id=node["BusinessId"],
+                                                      reference=node["Sku"],
+                                                      name=node["Title"],
+                                                      price=int(node["PriceInteger"]) * 100 + int(node["PriceDecimal"]),
+                                                      in_stock=True,
+                                                      taxo1=taxo1,
+                                                      taxo2=taxo2,
+                                                      taxo3=taxo3,
+                                                      url=""))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.PRIMARK, message=ex)
         return pd.DataFrame(products)

@@ -109,17 +109,16 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                 price = re.search('.([0-9.]+)', subnode.text, re.IGNORECASE).group(1)
                             else:
                                 price = re.search('.([0-9.]+)', subnode[0].text, re.IGNORECASE).group(1)
-                    products.append({"shop": "ms",
-                                     "id": product_id,
-                                     "reference": None,
-                                     "name": name,
-                                     "price": price,
-                                     "inStock": True,
-                                     "taxo1": taxo1,
-                                     "taxo2": taxo2,
-                                     "taxo3": taxo3,
-                                     "url": url_product,
-                                     "date": datetime.datetime.now()})
+                    products.append(add_in_dictionary(shop=Shop.MS,
+                                                      obj_id=product_id,
+                                                      reference=None,
+                                                      name=name,
+                                                      price=price,
+                                                      in_stock=True,
+                                                      taxo1=taxo1,
+                                                      taxo2=taxo2,
+                                                      taxo3=taxo3,
+                                                      url=url_product))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR,
                               shop=Shop.MS, message="Error node page {} : {} ({})".format(i, node, ex))
@@ -151,7 +150,7 @@ def parse_ms():
         return
 
     df = pd.concat(df_list)
-    save_output(df)
+    save_output(df=df)
 
 
 parse_ms()

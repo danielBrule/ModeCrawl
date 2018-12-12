@@ -66,18 +66,17 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             # Iterate inside the ["data"]["results"] node
             for node in data["data"]["results"]:
                 try:
-                    products.append({"shop": "Newlook",
-                                     "id": node['code'],
-                                     "reference": None,
-                                     "name": node['name'],
-                                     "price": node['price']['value'],
-                                     "inStock":
-                                         False if node['stock']['stockLevelStatus']['code'] == "outOfStock" else True,
-                                     "taxo1": taxo1,
-                                     "taxo2": taxo2,
-                                     "taxo3": taxo3,
-                                     "URL": "https://www.newlook.com/" + node['url'],
-                                     "date": datetime.datetime.now()})
+                    products.append(add_in_dictionary(shop=Shop.NEWLOOK,
+                                                      obj_id=node['code'],
+                                                      reference=None,
+                                                      name=node['name'],
+                                                      price=node['price']['value'],
+                                                      in_stock=False if node['stock']['stockLevelStatus'][
+                                                                            'code'] == "outOfStock" else True,
+                                                      taxo1=taxo1,
+                                                      taxo2=taxo2,
+                                                      taxo3=taxo3,
+                                                      url="https://www.newlook.com/" + node['url']))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.NEWLOOK, message=ex)
             i += 1

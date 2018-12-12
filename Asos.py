@@ -51,17 +51,16 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         products = []
         for node in data["products"]:
             try:
-                products.append({"shop": Shop.ASOS,
-                                 "id": node["id"],
-                                 "reference": node["productCode"],
-                                 "name": node["title"] if "title" in node else node["name"],
-                                 "price": node["price"]["current"]["value"],
-                                 "inStock": True,
-                                 "taxo1": taxo1,
-                                 "taxo2": taxo2,
-                                 "taxo3": taxo3,
-                                 "URL": "https://www.asos.com/" + node["url"],
-                                 "date": datetime.datetime.now()})
+                products.append(add_in_dictionary(shop=Shop.ASOS,
+                                                  obj_id=node["id"],
+                                                  reference=node["productCode"],
+                                                  name=node["title"] if "title" in node else node["name"],
+                                                  price=node["price"]["current"]["value"],
+                                                  in_stock=True,
+                                                  taxo1=taxo1,
+                                                  taxo2=taxo2,
+                                                  taxo3=taxo3,
+                                                  url="https://www.asos.com/" + node["url"]))
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=ex)
         return pd.DataFrame(products)

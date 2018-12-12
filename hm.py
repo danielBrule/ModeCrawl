@@ -60,17 +60,17 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         products = []
         for node in data["products"]:
             try:
-                products.append({"shop": "HM",
-                                 "id": node["articleCode"],
-                                 "reference": None,
-                                 "name": node["title"],
-                                 "price": node["price"][1:],
-                                 "inStock": True if node["outOfStockText"] == "" else False,
-                                 "taxo1": taxo1,
-                                 "taxo2": taxo2,
-                                 "taxo3": taxo3,
-                                 "url": "https://www2.hm.com/" + node["/en_gb/productpage.0663986003.html"],
-                                 "date": datetime.datetime.now()})
+                products.append(add_in_dictionary(shop=Shop.HM,
+                                                  obj_id=node["articleCode"],
+                                                  reference=None,
+                                                  name=node["title"],
+                                                  price=node["price"][1:],
+                                                  in_stock=True if node["outOfStockText"] == "" else False,
+                                                  taxo1=taxo1,
+                                                  taxo2=taxo2,
+                                                  taxo3=taxo3,
+                                                  url="https://www2.hm.com/" +
+                                                      node["/en_gb/productpage.0663986003.html"]))
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=ex)
         return pd.DataFrame(products)
@@ -80,7 +80,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     return None
 
 
-def parse_primark():
+def parse_hm():
     try:
         df_url = get_categories()
     except Exception as ex:
