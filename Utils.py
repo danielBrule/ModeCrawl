@@ -56,8 +56,8 @@ def simple_get(url: str, header: str = None):
 
 
 def log_error(level: ErrorLevel, shop: Shop, message: str):
-    if ErrorLevel != ErrorLevel.MINOR:
-        print("{} - {} - {}".format(datetime.datetime.now(), level.name, shop.name))
+    # if ErrorLevel != ErrorLevel.MINOR:
+    print("{} - {} - {}".format(datetime.datetime.now(), level.name, shop.name))
 
     file = open(os.path.join(DIRECTORY_ERROR, "errors.txt"), "a")
     file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name))

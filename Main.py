@@ -11,6 +11,7 @@ from Parser.Newlook import parse_newlook
 from Parser.Primark import parse_primark
 from Parser.Zara import parse_zara
 from Parser.tkmaxx import parse_tkmaxx
+from Parser.Gap import parse_gap
 
 try:
     print("Parse {}".format(Shop.ASOS.value))
@@ -53,3 +54,10 @@ try:
     parse_tkmaxx()
 except Exception as ex:
     log_error(level=ErrorLevel.MAJOR, shop=Shop.TKMAXX, message=ex)
+
+
+try:
+    print("Parse {}".format(Shop.GAP.value))
+    parse_gap()
+except Exception as ex:
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.GAP, message=ex)

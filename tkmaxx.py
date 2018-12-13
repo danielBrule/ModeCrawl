@@ -54,7 +54,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             for node in data["results"]:
                 try:
                     print(node['stockLevelStatus'])
-                    products.append(add_in_dictionary(shop=Shop.NEWLOOK,
+                    products.append(add_in_dictionary(shop=Shop.TKMAXX,
                                                       obj_id=node['code'],
                                                       reference=None,
                                                       name=node['label'],
