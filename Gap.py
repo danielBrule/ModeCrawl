@@ -46,7 +46,7 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
                                             taxo3=taxo3,
                                             url=None))
         except Exception as ex:
-            log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="PARSE JSON: {}".format(ex))
+            log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="PARSE JSON {}: {}".format(url, ex))
     return output
 
 

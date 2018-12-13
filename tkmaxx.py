@@ -59,8 +59,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                       reference=None,
                                                       name=node['label'],
                                                       price=node['price']['value'],
-                                                      in_stock=False if node['stockLevelStatus'] == "outOfStock"
-                                                      else True,
+                                                      in_stock=True if node['stockLevelStatus'] == "inStock"
+                                                      else False,
                                                       taxo1=taxo1,
                                                       taxo2=taxo2,
                                                       taxo3=taxo3,
