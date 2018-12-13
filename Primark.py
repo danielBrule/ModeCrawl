@@ -122,5 +122,3 @@ def parse_primark():
     now = datetime.datetime.now()
     df.to_csv(os.path.join(DIRECTORY_OUTPUT, "primark_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
-
-parse_primark()

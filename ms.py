@@ -3,17 +3,16 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import xml.etree.ElementTree as ET
 import re
-import time
 
 URL_MS_HOME = "https://www.marksandspencer.com/sitemap.xml"
 
 
 def get_categories() -> pd.DataFrame:
     sitemap_xml = simple_get(URL_MS_HOME)
-    sitemap_ot_node = ET.fromstring(sitemap_xml)
+    sitemap_root_node = ET.fromstring(sitemap_xml)
 
     sitemap_url = []
-    for href in sitemap_ot_node:
+    for href in sitemap_root_node:
         sitemap_url.append(href[0].text)
 
     sitemap_url = [x for x in sitemap_url if "men" in x or "women" in x or "kids" in x]
@@ -47,7 +46,7 @@ def get_categories() -> pd.DataFrame:
 
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
-    print(url)
+    print("url: {}".format(url))
     i = 1
     products = []
     try:
@@ -150,7 +149,5 @@ def parse_ms():
         return
 
     df = pd.concat(df_list)
-    save_output(df=df)
+    save_output(shop=Shop.MS, df=df)
 
-
-parse_ms()

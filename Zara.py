@@ -4,7 +4,6 @@ import re
 import json
 import pandas as pd
 import os
-import time
 import datetime
 
 URL_ZARA_HOME = "https://www.zara.com/uk/"
@@ -28,18 +27,18 @@ def get_categories() -> []:
 
 
 def get_inventory(url: str):
-    print(url)
+    print("url: {}".format(url))
     raw_html = simple_get(url)
     html = BeautifulSoup(raw_html, 'html.parser')
 
     pattern = re.compile(r"window.zara.dataLayer\s+=\s+(\{.*?\});window.zara.viewPayload = window.zara.dataLayer")
     scripts = html.find_all("script", text=pattern)
     try:
+        products = []
         for script in scripts:
             data = pattern.search(script.text).group(1)
             data = json.loads(data)
 
-            products = []
             for node in data["productGroups"][0]["products"]:
                 try:
                     if "price" in node:
@@ -65,12 +64,12 @@ def get_inventory(url: str):
                                                           taxo3=node["subfamilyName"],
                                                           url=""))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message=ex)
-
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.ZARA, message=ex)
+        return pd.DataFrame(products)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message=ex)
-        return None
-    return pd.DataFrame(products)
+    return None
+
 
 
 def parse_zara():
@@ -89,5 +88,3 @@ def parse_zara():
     now = datetime.datetime.now()
     df.to_csv(os.path.join(DIRECTORY_OUTPUT, "zara_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
-
-parse_zara()

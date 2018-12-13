@@ -9,6 +9,7 @@ import time
 
 
 class ErrorLevel(Enum):
+    MAJOR = "MAJOR"
     MAJOR_get_category = "MAJOR_get_category"
     MAJOR_get_inventory = "MAJOR_get_inventory"
     MEDIUM = "MEDIUM"
@@ -22,7 +23,9 @@ class Shop(Enum):
     MS = "MS"
     NEWLOOK = "NEWLOOK"
     PRIMARK = "PRIMARK"
+    TKMAXX = "TKMAXX"
     ZARA = "ZARA"
+    GAP = "GAP"
 
 
 DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
@@ -39,7 +42,7 @@ def is_good_response(resp):
 
 
 def simple_get(url: str, header: str = None):
-    time.sleep(2)
+    time.sleep(1)
     try:
         with closing(requests.get(url, stream=True, headers=header)) as resp:
             if is_good_response(resp):
@@ -53,7 +56,8 @@ def simple_get(url: str, header: str = None):
 
 
 def log_error(level: ErrorLevel, shop: Shop, message: str):
-    print("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name))
+    if ErrorLevel != ErrorLevel.MINOR:
+        print("{} - {} - {}".format(datetime.datetime.now(), level.name, shop.name))
 
     file = open(os.path.join(DIRECTORY_ERROR, "errors.txt"), "a")
     file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name))

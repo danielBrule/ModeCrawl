@@ -53,7 +53,7 @@ def get_categories() -> pd.DataFrame:
 
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
-    print('start get_inventory function with URL {}'.format(url))
+    print("Category: {}".format(url))
     try:
         products = []
         i = 1
@@ -108,5 +108,3 @@ def parse_newlook():
     df = pd.concat(df_list)
     save_output(shop=Shop.ASOS, df=df)
 
-
-parse_newlook()

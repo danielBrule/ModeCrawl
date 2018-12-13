@@ -5,7 +5,6 @@ import xml.etree.ElementTree as ET
 import os
 import datetime
 import json
-import time
 
 URL_HM_HOME = "https://www2.hm.com/en_gb.pages.0.xml"
 
@@ -49,7 +48,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
         results = html.findAll(name="form", attrs={"class": "js-product-filter-form"})
         if len(results) > 1:
-            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="more than one node: {}".results)
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="more than one node: {}".format(results))
         if len(results) == 0:
             log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="empty node")
             return None
@@ -69,8 +68,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                   taxo1=taxo1,
                                                   taxo2=taxo2,
                                                   taxo3=taxo3,
-                                                  url="https://www2.hm.com/" +
-                                                      node["/en_gb/productpage.0663986003.html"]))
+                                                  url="https://www2.hm.com/" + node["swatches"][0]["articleLink"]))
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=ex)
         return pd.DataFrame(products)
@@ -101,5 +99,3 @@ def parse_hm():
     now = datetime.datetime.now()
     df.to_csv(os.path.join(DIRECTORY_OUTPUT, "hm_{}-{}-{}.csv".format(now.year, now.month, now.day)))
 
-
-parse_primark()

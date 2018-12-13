@@ -91,5 +91,3 @@ def parse_asos():
     df = pd.concat(df_list)
     save_output(shop=Shop.ASOS, df=df)
 
-
-parse_asos()
