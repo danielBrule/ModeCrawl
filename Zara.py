@@ -22,7 +22,7 @@ def get_categories() -> []:
             try:
                 output.append(result.find("a")["data-href"])
             except Exception as ex:
-                log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message="Invalid category".format(ex))
+                log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message="Invalid category".format(ex))
     return output
 
 
@@ -85,6 +85,5 @@ def parse_zara():
         log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ZARA, message=ex)
         return
     df = pd.concat(df_list)
-    now = datetime.datetime.now()
-    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "zara_{}-{}-{}.csv".format(now.year, now.month, now.day)))
+    save_output(shop=Shop.ZARA, df=df)
 

@@ -53,7 +53,6 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             number_of_pages = data['pagination']['numberOfPages']
             for node in data["results"]:
                 try:
-                    print(node['stockLevelStatus'])
                     products.append(add_in_dictionary(shop=Shop.TKMAXX,
                                                       obj_id=node['code'],
                                                       reference=None,
@@ -94,4 +93,4 @@ def parse_tkmaxx():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.MS, df=df)
+    save_output(shop=Shop.TKMAXX, df=df)

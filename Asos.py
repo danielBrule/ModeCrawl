@@ -39,7 +39,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         find = re.search('cat/\?cid=([0-9]+)', url, re.IGNORECASE)
 
         if find is None:
-            print("error no cid with URL {}".format(url))
+            log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message="error no cid with URL {}".format(url))
             return None
         cid = find.group(1)
         json_url = \

@@ -70,21 +70,21 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         for product in products:
             url = url + "22" + product + "%22%2C%"
             i += 1
-            if i % 4 == 0:
+            if i % 40 == 0:
                 url = url[:-3] + BASE_URL_END
                 try:
                     output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, output=output, url=url)
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
 
-        if i % 4 != 0:
-            url += BASE_URL_END
+        if i % 40 != 0:
+            url = url[:-3] + BASE_URL_END
             try:
                 output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, output=output, url=url)
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
 
-        return pd.DataFrame(products)
+        return pd.DataFrame(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
     return None
@@ -108,6 +108,4 @@ def parse_gap():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.MS, df=df)
-
-
+    save_output(shop=Shop.GAP, df=df)

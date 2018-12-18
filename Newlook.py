@@ -10,32 +10,19 @@ def get_categories() -> pd.DataFrame:
     # get url containing xml
     data = simple_get(URL_NEWLOOK_CATEGORIES)
     # get URL
-    print(data)
     # convert result to xml
     root_node = ET.fromstring(data)
-    print(root_node)
 
     raw_url_list = []
     for x in root_node:
         url_temp = x[0].text
         raw_url_list.append(url_temp)
 
-    print('raw_url_list compiled')
-
-    # Extract items in URL
-    print('extract items in URL')
     splited_url_list = [x.split("/c/", 1)[0] for x in raw_url_list]
-    print(splited_url_list[1])
 
     # Split piece of string obtained on "uk" and keep second half of split
-    print('Split further on "uk"')
     splited_after_uk = [x.split("/uk/", 1)[1] for x in splited_url_list]
-    print(splited_after_uk[1])
-
-    # Split on "\" limiting to 4 splits
-    print('Split further on " \ " to extract taxonomy')
     split_further = [x.split("/", 3) for x in splited_after_uk]
-    print(split_further[0])
 
     # Place first 3 splits into a dict
     list_dict_taxo = []
@@ -45,7 +32,6 @@ def get_categories() -> pd.DataFrame:
                      'taxo3': split_further[i][2] if len(split_further[i]) >= 3 else None,
                      'URL': raw_url_list[i]}
         list_dict_taxo.append(dict_temp)
-    print('list_dict_taxo  generated')
 
     df_dict_taxo = pd.DataFrame(list_dict_taxo)
 
@@ -106,5 +92,5 @@ def parse_newlook():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.ASOS, df=df)
+    save_output(shop=Shop.NEWLOOK, df=df)
 

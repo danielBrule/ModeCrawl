@@ -96,6 +96,5 @@ def parse_hm():
         return
 
     df = pd.concat(df_list)
-    now = datetime.datetime.now()
-    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "hm_{}-{}-{}.csv".format(now.year, now.month, now.day)))
+    save_output(shop=Shop.HM, df=df)
 
