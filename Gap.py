@@ -20,7 +20,7 @@ def get_categories() -> pd.DataFrame:
                            or "gap/girls" in x]
     output = []
     for url in sitemap_product_url:
-        taxonomy = url.replace('https://www.gap.co.uk/', '')
+        taxonomy = url.replace('https://www.gap.co.uk/gap/', '')
         taxonomy = taxonomy.split("/")
         output.append({"taxo1": taxonomy[0],
                        "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
@@ -35,11 +35,20 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
     data = json.loads(data)
     for node in data["productHits"]:
         try:
+            price = None
+            for price_node in node['prices']:
+                try:
+                    tmp_price = price_node['value'][1:]
+                    if price is None or tmp_price < price:
+                        price = tmp_price
+                except Exception as ex:
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.GAP,
+                              message="PARSE JSON FOR PRICE{}: {}".format(url, ex))
             output.append(add_in_dictionary(shop=Shop.GAP,
                                             obj_id=node['id'],
                                             reference=node['uuid'],
                                             name=node['name'],
-                                            price=node['prices'][0]['value'][1:],
+                                            price=price,
                                             in_stock=True,
                                             taxo1=taxo1,
                                             taxo2=taxo2,
@@ -52,6 +61,7 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     print("url: {}".format(url))
+    url = "https://www.gap.co.uk/gap/boys/clothing/trousers/"
     try:
         products = []
         raw_html = simple_get(url)
@@ -109,3 +119,6 @@ def parse_gap():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.GAP, df=df)
+
+
+parse_gap()

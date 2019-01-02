@@ -81,13 +81,13 @@ def get_clean_TKMAXX() -> pd.DataFrame:
                                  "mens-contemporary-designers": taxonomie_level1.MAN.value,
                                  "mens-mod-box": taxonomie_level1.MAN.value,
                                  "mens-gold-label": taxonomie_level1.MAN.value,
-                                 " mens-early-access": taxonomie_level1.MAN.value,
+                                 "mens-early-access": taxonomie_level1.MAN.value,
                                  "women": taxonomie_level1.WOMAN.value,
                                  "womens-contemporary-designers": taxonomie_level1.WOMAN.value,
                                  "womens-plus-size": taxonomie_level1.WOMAN.value,
                                  "womens-gold-label": taxonomie_level1.WOMAN.value,
                                  "womens-mod-box": taxonomie_level1.WOMAN.value,
-                                 " womens-early-access": taxonomie_level1.WOMAN.value,
+                                 "womens-early-access": taxonomie_level1.WOMAN.value,
                                  "kids": taxonomie_level1.KID.value})
     df = df[(df.taxo1 != "clearance") &
             (df.taxo1 != "christmas") &

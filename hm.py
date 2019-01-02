@@ -52,7 +52,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         if len(results) == 0:
             log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="empty node")
             return None
-        json_url = "https://www2.hm.com" + results[0].attrs["data-filtered-products-url"]
+        json_url = "https://www2.hm.com" + results[0].attrs["data-filtered-products-url"] + "?page-size=999"
         data = simple_get(json_url)
         data = json.loads(data)
 
