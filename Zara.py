@@ -3,8 +3,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import pandas as pd
-import os
-import datetime
 
 URL_ZARA_HOME = "https://www.zara.com/uk/"
 
@@ -71,7 +69,6 @@ def get_inventory(url: str):
     return None
 
 
-
 def parse_zara():
     try:
         list_url = get_categories()
@@ -86,4 +83,3 @@ def parse_zara():
         return
     df = pd.concat(df_list)
     save_output(shop=Shop.ZARA, df=df)
-

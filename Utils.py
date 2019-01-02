@@ -31,6 +31,7 @@ class Shop(Enum):
 DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
 DIRECTORY_OUTPUT_BEFORE_CLEAN = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp/before_clean"
 DIRECTORY_ERROR = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
+DIRECTORY_AGGREGATE_FILES = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp/aggregated_files"
 
 USER_AGENT = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -68,6 +69,11 @@ def log_error(level: ErrorLevel, shop: Shop, message: str):
     file.write("{} - {}\n".format(datetime.datetime.now(), level.name))
     file.write("{}\n".format(message))
     file.close()
+
+    if ErrorLevel != ErrorLevel.MAJOR:
+        file = open(os.path.join(DIRECTORY_ERROR, "_MAJOR_errors.txt"), "a")
+        file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name))
+        file.close()
 
 
 def save_output(shop: Shop, df: pd.DataFrame):
