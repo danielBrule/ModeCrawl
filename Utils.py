@@ -29,6 +29,7 @@ class Shop(Enum):
 
 
 DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
+DIRECTORY_OUTPUT_BEFORE_CLEAN = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp/before_clean"
 DIRECTORY_ERROR = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
 
 USER_AGENT = {
@@ -73,7 +74,7 @@ def save_output(shop: Shop, df: pd.DataFrame):
     now = datetime.datetime.now()
 
     df.to_csv(
-        os.path.join(DIRECTORY_OUTPUT, "{}_{}-{}-{}_before_clean.csv".format(shop.name, now.year, now.month, now.day)),
+        os.path.join(DIRECTORY_OUTPUT_BEFORE_CLEAN, "{}_{}-{}-{}_before_clean.csv".format(shop.name, now.year, now.month, now.day)),
         index=False)
 
     df = df.sort_values(by=['id', 'reference', 'name', "taxo1", "taxo2", "taxo3"], na_position="first")

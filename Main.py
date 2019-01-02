@@ -50,14 +50,13 @@ except Exception as ex:
     log_error(level=ErrorLevel.MAJOR, shop=Shop.ZARA, message=ex)
 
 try:
-    print("Parse {}".format(Shop.TKMAXX.value))
-    parse_tkmaxx()
-except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.TKMAXX, message=ex)
-
-
-try:
     print("Parse {}".format(Shop.GAP.value))
     parse_gap()
 except Exception as ex:
     log_error(level=ErrorLevel.MAJOR, shop=Shop.GAP, message=ex)
+
+try:
+    print("Parse {}".format(Shop.TKMAXX.value))
+    parse_tkmaxx()
+except Exception as ex:
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.TKMAXX, message=ex)

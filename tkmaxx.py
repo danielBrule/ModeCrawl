@@ -3,6 +3,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import json
 import re
+from bs4 import BeautifulSoup
 
 URL_TKMAXX_HOME = "https://www.tkmaxx.com/uk/en/sitemap.xml"
 
@@ -46,8 +47,15 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         products = []
         i = 0
         while True:
+            raw_html = simple_get(url)
+            html = BeautifulSoup(raw_html, 'html.parser')
+
+            if "The page you were looking for does not exist" in html:
+                return None
+
             data = simple_get(
-                url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock&fetchAll=true&page=0")
+                url + "/autoLoad?q=&page={}".format(i))
+            # url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock&fetchAll=true&page=0")
             data = json.loads(data)
 
             number_of_pages = data['pagination']['numberOfPages']
@@ -67,7 +75,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.NEWLOOK, message=ex)
             i += 1
-            if i > number_of_pages:
+            if i >= number_of_pages:
                 break
         return pd.DataFrame(products)
     except Exception as ex:
@@ -94,3 +102,4 @@ def parse_tkmaxx():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.TKMAXX, df=df)
+

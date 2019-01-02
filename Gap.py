@@ -39,7 +39,7 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
                                             obj_id=node['id'],
                                             reference=node['uuid'],
                                             name=node['name'],
-                                            price=node['prices'][len(node['prices']) - 1]['value'][1:],
+                                            price=node['prices'][0]['value'][1:],
                                             in_stock=True,
                                             taxo1=taxo1,
                                             taxo2=taxo2,
