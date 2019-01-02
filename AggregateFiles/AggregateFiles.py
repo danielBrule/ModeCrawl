@@ -55,9 +55,13 @@ def get_clean_NEWLOOK() -> pd.DataFrame:
 
 def get_clean_GAP() -> pd.DataFrame:
     df = read_files(Shop.GAP)
-    df.taxo1 = df.taxo2
-    df.taxo2 = df.taxo3
-    df.taxo3 = None
+    tmp1_df = df[df.taxo1 == "gap"]
+    tmp2_df = df[df.taxo1 != "gap"]
+    tmp1_df.taxo1 = tmp1_df.taxo2
+    tmp1_df.taxo2 = tmp1_df.taxo3
+    tmp1_df.taxo3 = None
+    df = pd.concat([tmp1_df, tmp2_df], sort=False)
+
     df.taxo1 = df.taxo1.replace({"men": taxonomie_level1.MAN.value,
                                  "women": taxonomie_level1.WOMAN.value,
                                  "girls": taxonomie_level1.KID.value,
