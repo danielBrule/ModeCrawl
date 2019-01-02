@@ -80,12 +80,14 @@ def get_clean_TKMAXX() -> pd.DataFrame:
     df.taxo1 = df.taxo1.replace({"men": taxonomie_level1.MAN.value,
                                  "mens-contemporary-designers": taxonomie_level1.MAN.value,
                                  "mens-mod-box": taxonomie_level1.MAN.value,
-                                 "mens-gold-label ": taxonomie_level1.MAN.value,
+                                 "mens-gold-label": taxonomie_level1.MAN.value,
+                                 " mens-early-access": taxonomie_level1.MAN.value,
                                  "women": taxonomie_level1.WOMAN.value,
                                  "womens-contemporary-designers": taxonomie_level1.WOMAN.value,
                                  "womens-plus-size": taxonomie_level1.WOMAN.value,
                                  "womens-gold-label": taxonomie_level1.WOMAN.value,
                                  "womens-mod-box": taxonomie_level1.WOMAN.value,
+                                 " womens-early-access": taxonomie_level1.WOMAN.value,
                                  "kids": taxonomie_level1.KID.value})
     df = df[(df.taxo1 != "clearance") &
             (df.taxo1 != "christmas") &
@@ -103,9 +105,10 @@ def get_clean_ZARA() -> pd.DataFrame:
 
 
 def drop_duplicate(shop: Shop, df: pd.DataFrame):
-    print("{} - {}".format(shop.value, len(df)))
+    len_before = len(df)
     df = df.drop_duplicates(subset=['id', 'date'], keep="last")
-    print("{} - {}".format(shop.value, len(df)))
+    if len_before != len(df):
+        print("DUPLICATE DATE IN {}".format(shop.value))
 
 
 def clean_and_aggregate_files():
