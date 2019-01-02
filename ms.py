@@ -75,7 +75,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                             name = subnode.text
                         if subnode.attrib["class"] == "spotlight__normalPrice":
                             price = re.search('.([0-9.]+)', subnode.text, re.IGNORECASE).group(1)
-                    products.append({"shop": "ms",
+                    products.append({"shop": Shop.MS,
                                      "id": product_id,
                                      "reference": None,
                                      "name": name,

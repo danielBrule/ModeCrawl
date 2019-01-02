@@ -40,6 +40,7 @@ def get_clean_MS() -> pd.DataFrame:
                                  "kids": taxonomie_level1.KID.value})
     df.URL = df.apply(lambda x: x.URL if pd.isnull(x.url) else x.url, axis=1)
     df = df.drop(['url'], axis=1)
+    df.shop = Shop.MS.value
     return df
 
 
