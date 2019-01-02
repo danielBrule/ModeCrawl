@@ -61,7 +61,6 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     print("url: {}".format(url))
-    url = "https://www.gap.co.uk/gap/boys/clothing/trousers/"
     try:
         products = []
         raw_html = simple_get(url)
@@ -121,4 +120,3 @@ def parse_gap():
     save_output(shop=Shop.GAP, df=df)
 
 
-parse_gap()
