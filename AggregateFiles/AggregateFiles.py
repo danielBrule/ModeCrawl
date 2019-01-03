@@ -22,7 +22,6 @@ class taxo_lvl3(Enum):
     WOMEN_SWEATSHIRT = "SWEATSHIRT"
     WOMEN_JACKET = "JACKET/COAT"
     WOMEN_SHIRT = "SHIRT"
-
     WOMEN_DRESS = "DRESS"
     WOMEN_SKIRTS = "SKIRTS"
     WOMEN_JEANS = "JEANS"
@@ -194,71 +193,8 @@ def get_clean_MS(shop: Shop) -> pd.DataFrame:
     df_man = df[df.taxo1 == taxo_lvl1.MAN.value].copy()
     df_woman = df[df.taxo1 == taxo_lvl1.WOMAN.value].copy()
 
-    # ##########################################################################################
-    # ##########################################################################################
-    # ##########################################################################################
+    return taxonomise_by_regexp(df_man=df_man, df_woman=df_woman, shop=shop)
 
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_TSHIRT.value
-                                       if my_row["taxo2"] == "tops-tshirts-and-polos" and
-                                          "polo" not in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-
-    df_man.loc[df_man.taxo2 == "shirts", "new_taxo3"] = taxo_lvl3.MEN_SHIRT.value
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_JACKET.value
-                                       if (" coat" in str(my_row["name"]).lower() or
-                                           " jacket" in str(my_row["name"]).lower())
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_SWEATSHIRT.value
-                                       if "sweatshirt" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_JEANS.value
-                                       if "jeans" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-
-    # ##########################################################################################
-    # ##########################################################################################
-    # ##########################################################################################
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SWEATSHIRT.value
-                                           if (my_row["taxo2"] == "tops-and-tshirts-dpsrtxl" or
-                                               my_row["taxo2"] == "tops-and-tshirts") and
-                                              "sweatshirt" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SHIRT.value
-                                           if my_row["taxo2"] == "tops-and-tshirts-dpsrtxl" and
-                                              (" shirt" in str(my_row["name"]).lower() or
-                                               " blouse" in str(my_row["name"]).lower())
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_JACKET.value
-                                           if (" coat" in str(my_row["name"]).lower() or
-                                               " jacket" in str(my_row["name"]).lower())
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SKIRTS.value
-                                           if my_row["taxo2"] != "coords" and
-                                              "skirt" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_DRESS.value
-                                           if "dress" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_JEANS.value
-                                           if "jeans" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    return create_output_df(df_man, df_woman, shop)
 
 
 def get_clean_NEWLOOK(shop: Shop) -> pd.DataFrame:
@@ -272,70 +208,7 @@ def get_clean_NEWLOOK(shop: Shop) -> pd.DataFrame:
     df_man = df[df.taxo1 == taxo_lvl1.MAN.value].copy()
     df_woman = df[df.taxo1 == taxo_lvl1.WOMAN.value].copy()
 
-    # ##########################################################################################
-    # ##########################################################################################
-    # ##########################################################################################
-
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_TSHIRT.value
-                                       if "t-shirt" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_SHIRT.value
-                                       if " shirt" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_JACKET.value
-                                       if "jacket" in str(my_row["name"]).lower() or
-                                          "coat" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_SWEATSHIRT.value
-                                       if "sweatshirt" in str(my_row["name"]).lower() or
-                                          "hoodie" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_JEANS.value
-                                       if "jeans" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-
-    # ##########################################################################################
-    # ##########################################################################################
-    # ##########################################################################################
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SWEATSHIRT.value
-                                           if "sweatshirt" in str(my_row["name"]).lower() or
-                                              "hoodie" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SHIRT.value
-                                           if "blouse" in str(my_row["name"]).lower() or
-                                              "shirt" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_JACKET.value
-                                           if my_row["taxo2"] != "accessories" and
-                                              ("coat" in str(my_row["name"]).lower() or
-                                               "jacket" in str(my_row["name"]).lower())
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SKIRTS.value
-                                           if "skirt" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_DRESS.value
-                                           if "dress" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_JEANS.value
-                                           if "jeans" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    return create_output_df(df_man, df_woman, shop)
+    return taxonomise_by_regexp(df_man=df_man, df_woman=df_woman, shop=shop)
 
 
 def get_clean_GAP(shop: Shop) -> pd.DataFrame:
@@ -356,70 +229,7 @@ def get_clean_GAP(shop: Shop) -> pd.DataFrame:
     df_man = df[df.taxo1 == taxo_lvl1.MAN.value].copy()
     df_woman = df[df.taxo1 == taxo_lvl1.WOMAN.value].copy()
 
-    # ##########################################################################################
-    # ##########################################################################################
-    # ##########################################################################################
-
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_TSHIRT.value
-                                       if "t-shirt" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_SHIRT.value
-                                       if " shirt" in str(my_row["name"]).lower() and
-                                          "polo" not in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_JACKET.value
-                                       if "jacket" in str(my_row["name"]).lower() or
-                                          "coat" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_SWEATSHIRT.value
-                                       if "sweater" in str(my_row["name"]).lower() or
-                                          "sweatshirt" in str(my_row["name"]).lower() or
-                                          "hoodie" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-    df_man["new_taxo3"] = df_man.apply(lambda my_row:
-                                       taxo_lvl3.MEN_JEANS.value
-                                       if "jeans" in str(my_row["name"]).lower()
-                                       else my_row["new_taxo3"], axis=1)
-
-    # ##########################################################################################
-    # ##########################################################################################
-    # ##########################################################################################
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SWEATSHIRT.value
-                                           if "sweater" in str(my_row["name"]).lower() or
-                                              "sweatshirt" in str(my_row["name"]).lower() or
-                                              "hoodie" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SHIRT.value
-                                           if " shirt" in str(my_row["name"]).lower() or
-                                              "t-shirt" in str(my_row["name"]).lower() or
-                                              "blouse" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_JACKET.value
-                                           if "jacket" in str(my_row["name"]).lower() or
-                                              "coat" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SHIRT.value
-                                           if "skirt" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_DRESS.value
-                                           if "dress" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-    df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_JEANS.value
-                                           if "jeans" in str(my_row["name"]).lower()
-                                           else my_row["new_taxo3"], axis=1)
-
-    return create_output_df(df_man, df_woman, shop)
+    return taxonomise_by_regexp(df_man=df_man, df_woman=df_woman, shop=shop)
 
 
 def get_clean_PRIMARK(shop: Shop) -> pd.DataFrame:
@@ -445,14 +255,12 @@ def get_clean_PRIMARK(shop: Shop) -> pd.DataFrame:
                                            if "hoody" in str(my_row["name"]).lower() or
                                               "sweatshirt" in str(my_row["name"]).lower()
                                            else my_row["new_taxo3"], axis=1)
-
     df_woman["new_taxo3"] = df_woman.apply(lambda my_row:
-                                           taxo_lvl3.WOMEN_SWEATSHIRT.value
+                                           taxo_lvl3.WOMEN_SHIRT.value
                                            if my_row["taxo2"] == "Tops" and
                                               (" shirt" in str(my_row["name"]).lower() or
                                                " blouse" in str(my_row["name"]).lower())
                                            else my_row["new_taxo3"], axis=1)
-    df_woman.loc[df_woman.taxo2 == "TODO", "new_taxo3"] = taxo_lvl3.WOMEN_SHIRT.value
     df_woman.loc[df_woman.taxo2 == "Coats & Jackets", "new_taxo3"] = taxo_lvl3.WOMEN_JACKET.value
     df_woman.loc[df_woman.taxo2 == "Skirts", "new_taxo3"] = taxo_lvl3.WOMEN_SKIRTS.value
     df_woman.loc[df_woman.taxo2 == "Dresses", "new_taxo3"] = taxo_lvl3.WOMEN_DRESS.value
