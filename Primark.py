@@ -1,5 +1,5 @@
 from Parser.Utils import *
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 import pandas as pd
 import xml.etree.ElementTree as ET
 import os
@@ -14,51 +14,39 @@ def get_categories() -> pd.DataFrame:
     html = BeautifulSoup(raw_html, 'html.parser')
     output = []
 
-    results = html.findAll(name="nav", attrs={"class": "products-menu blue-menu"})
-    for result in results:
-        # ignore role nodes
-        if "role" in result.attrs:
+    results = html.find_all(name="div", attrs={"id": "container-productsMenu"})[0]
+
+    root_node = ET.fromstring(str(results))
+
+    for node in root_node[0][0]:
+
+        if node.attrib["class"] != 'active has-sub':
             continue
 
-        # convert result to xml
-        root_node = ET.fromstring(str(result))
-        for node in root_node[0]:
+        for category_node in node[1]:
+            # get sub category name
 
-            # ignore node with class <> "active has-sub"
-            if node.attrib["class"] != 'active has-sub':
-                continue
-
-            # get category
-            category = node[0].attrib["data-category"]
-
-            # for all sub category
-            for category_node in node[1]:
-                # get sub category name
-                sub_category = category_node[0].attrib["data-breadcrumb"]
-
-                # if sub category has sub sub category then read them
-                if "class" in category_node.attrib and \
-                        category_node.attrib["class"] == 'active has-sub':
-                    # get info on the sub sub category
-                    for sub_category_node in category_node[1]:
-                        # read sub sub category
-                        sub_sub_category = sub_category_node[0].attrib["data-breadcrumb"]
-                        category_name = sub_category_node[0].attrib["data-category"]
-
-                        output.append({"taxo1": category,
-                                       "taxo2": sub_category,
-                                       "taxo3": sub_sub_category,
-                                       "category": category_name})
-
-                else:
-                    # get info on the sub category
-                    category_name = category_node[0].attrib["data-category"]
-                    output.append({"taxo1": category,
-                                   "taxo2": sub_category,
-                                   "taxo3": "",
+            # if sub category has sub sub category then read them
+            if "class" in category_node.attrib and \
+                    category_node.attrib["class"] == 'active has-sub':
+                # get info on the sub sub category
+                for sub_category_node in category_node[1]:
+                    # read sub sub category
+                    taxonomy = sub_category_node[0].attrib["data-category"].split(",")
+                    category_name = sub_category_node[0].attrib["data-category"]
+                    output.append({"taxo1": taxonomy[0],
+                                   "taxo2": taxonomy[1] if len(taxonomy) >= 2 else None,
+                                   "taxo3": taxonomy[2] if len(taxonomy) >= 3 else None,
                                    "category": category_name})
 
-    # convert list of dictionary to df and remove duplicates
+            else:
+                taxonomy = category_node[0].attrib["data-category"].split(",")
+                category_name = category_node[0].attrib["data-category"]
+                output.append({"taxo1": taxonomy[0],
+                               "taxo2": taxonomy[1] if len(taxonomy) >= 2 else None,
+                               "taxo3": taxonomy[2] if len(taxonomy) >= 3 else None,
+                               "category": category_name})
+
     output = pd.DataFrame(output)
     output = output.drop_duplicates()
     return output
@@ -107,7 +95,7 @@ def parse_primark():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.PRIMARK, message=ex)
         return
-
+    print(len(df_url))
     try:
         df_list = [get_inventory(taxo1=row["taxo1"],
                                  taxo2=row["taxo2"],

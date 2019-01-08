@@ -2,8 +2,6 @@ from Parser.Utils import *
 from bs4 import BeautifulSoup
 import pandas as pd
 import xml.etree.ElementTree as ET
-import os
-import datetime
 import json
 
 URL_HM_HOME = "https://www2.hm.com/en_gb.pages.0.xml"
@@ -40,7 +38,7 @@ def get_categories() -> []:
     return output
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
+def get_inventory(taxo1: str, url: str):
     print("{} - Category: {}".format(Shop.HM.name, url))
     try:
         raw_html = simple_get(url)
@@ -59,6 +57,14 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         products = []
         for node in data["products"]:
             try:
+                taxo = node["favouritesTracking"].split("|")[-1].split(":")
+                taxo = [x.strip() for x in taxo]
+                tmp_taxo2 = taxo[1] if len(taxo) >= 2 else None
+                tmp_taxo3 = taxo[2] if len(taxo) >= 3 else None
+                if (isinstance(tmp_taxo2, str) and tmp_taxo2 in ["BASICS_BASICS"]) or \
+                        (isinstance(tmp_taxo3, str) and
+                         tmp_taxo3 in [" BASICS_VIEW_ALL", "BEST BASICS_VIEW_ALL", "BESTBASICS"]):
+                    continue
                 products.append(add_in_dictionary(shop=Shop.HM,
                                                   obj_id=node["articleCode"],
                                                   reference=None,
@@ -66,8 +72,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                   price=node["price"][1:],
                                                   in_stock=True if node["outOfStockText"] == "" else False,
                                                   taxo1=taxo1,
-                                                  taxo2=taxo2,
-                                                  taxo3=taxo3,
+                                                  taxo2=tmp_taxo2,
+                                                  taxo3=tmp_taxo3,
                                                   url="https://www2.hm.com/" + node["swatches"][0]["articleLink"]))
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=ex)
@@ -84,11 +90,9 @@ def parse_hm():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.HM, message=ex)
         return
-
+    print(len(df_url))
     try:
         df_list = [get_inventory(taxo1=row["taxo1"],
-                                 taxo2=row["taxo2"],
-                                 taxo3=row["taxo3"],
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
@@ -97,4 +101,3 @@ def parse_hm():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.HM, df=df)
-
