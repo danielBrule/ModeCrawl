@@ -4,14 +4,14 @@ import xml.etree.ElementTree as ET
 import json
 from bs4 import BeautifulSoup
 
-URL_TKMAXX_HOME = "https://www.gap.co.uk/sitemap_2-category.xml"
+URL_GAP_HOME = "https://www.gap.co.uk/sitemap_2-category.xml"
 BASE_URL = "https://www.gap.co.uk/on/demandware.store/Sites-ShopUK-Site/en_GB/Product-LazyLoadBatchTiles?pids=%5B%"
 BASE_URL_END = "5D&cgid=1110339&ulid=1110339"
 
 
 def get_categories() -> pd.DataFrame:
     sitemap_product_url = []
-    sitemap_category_xml = simple_get(URL_TKMAXX_HOME)
+    sitemap_category_xml = simple_get(URL_GAP_HOME)
     sitemap_category_root_node = ET.fromstring(sitemap_category_xml)
     for category in sitemap_category_root_node:
         sitemap_product_url.append(category[0].text)
@@ -102,6 +102,12 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 def parse_gap():
     try:
         df_url = get_categories()
+        df_url = df_url.sort_values(by="URL")
+        df_url["URL_next_line"] = df_url['URL'].shift(-1)
+        df_url["is_in_next_row"] = df_url.apply(lambda row: str(row['URL']) in str(row["URL_next_line"]), axis=1)
+        df_url = df_url.loc[df_url['is_in_next_row'] == False]
+        df_url = df_url.drop(["URL_next_line", "is_in_next_row"], axis=1)
+
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.GAP, message=ex)
         return
@@ -120,3 +126,4 @@ def parse_gap():
     save_output(shop=Shop.GAP, df=df)
 
 
+parse_gap()

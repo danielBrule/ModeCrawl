@@ -2,8 +2,7 @@ from Parser.Utils import *
 from bs4 import BeautifulSoup, NavigableString
 import pandas as pd
 import xml.etree.ElementTree as ET
-import os
-import datetime
+
 import json
 
 URL_PRIMARK_HOME = "https://www.primark.com/en/products"
