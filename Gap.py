@@ -59,6 +59,32 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
     return output
 
 
+class Singleton:
+    def __init__(self, decorated):
+        self._decorated = decorated
+
+    def instance(self):
+        try:
+            return self._instance
+        except AttributeError:
+            self._instance = self._decorated()
+            return self._instance
+
+    def __call__(self):
+        raise TypeError('Singletons must be accessed through `instance()`.')
+
+
+@Singleton
+class GapListProductsAlreadyParsedSingleton:
+    product_list = []
+
+    def get_product_list(self, new_products: []) -> []:
+        print(len(self.product_list))
+        output = set(new_products) - set(self.product_list)
+        self.product_list = self.product_list + list(output)
+        return output
+
+
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     print("url: {}".format(url))
     try:
@@ -73,6 +99,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="HTML parsing: {}".format(ex))
 
+        products = GapListProductsAlreadyParsedSingleton.instance().get_product_list(products)
         url = BASE_URL
         i = 0
         output = []
@@ -107,6 +134,7 @@ def parse_gap():
         df_url["is_in_next_row"] = df_url.apply(lambda row: str(row['URL']) in str(row["URL_next_line"]), axis=1)
         df_url = df_url.loc[df_url['is_in_next_row'] == False]
         df_url = df_url.drop(["URL_next_line", "is_in_next_row"], axis=1)
+        df_url = df_url.sort_values(by=["taxo1", "taxo2", "taxo3"])
 
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.GAP, message=ex)
@@ -125,5 +153,3 @@ def parse_gap():
     df = pd.concat(df_list)
     save_output(shop=Shop.GAP, df=df)
 
-
-parse_gap()
