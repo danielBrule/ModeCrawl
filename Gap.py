@@ -38,9 +38,10 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
             price = None
             for price_node in node['prices']:
                 try:
-                    tmp_price = price_node['value'][1:]
-                    if price is None or tmp_price < price:
-                        price = tmp_price
+                    if len(price_node) != 0:
+                        tmp_price = price_node['value'][1:]
+                        if price is None or tmp_price < price:
+                            price = tmp_price
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.GAP,
                               message="PARSE JSON FOR PRICE{}: {}".format(url, ex))
@@ -100,6 +101,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                 log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="HTML parsing: {}".format(ex))
 
         products = GapListProductsAlreadyParsedSingleton.instance().get_product_list(products)
+        if len(products) == 0:
+            return None
         url = BASE_URL
         i = 0
         output = []
@@ -152,4 +155,3 @@ def parse_gap():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.GAP, df=df)
-
