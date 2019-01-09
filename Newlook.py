@@ -2,6 +2,7 @@ from Parser.Utils import *
 import pandas as pd
 import xml.etree.ElementTree as ET
 import json
+from bs4 import BeautifulSoup
 
 URL_NEWLOOK_CATEGORIES = "https://www.newlook.com/uk/sitemap/maps/sitemap_uk_category_en_1.xml"
 
@@ -38,9 +39,27 @@ def get_categories() -> pd.DataFrame:
     return df_dict_taxo
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
+def get_inventory(taxo1, taxo2, taxo3, url: str):
     print("Category: {}".format(url))
     try:
+        try:
+            raw_html = simple_get(url)
+            html = BeautifulSoup(raw_html, 'html.parser')
+            results = html.findAll(name="ol",
+                                   attrs={"typeof": "BreadcrumbList", "class": "breadcrumb__list list--unordered"})
+            root_node = ET.fromstring(str(results[0]))
+            taxo = []
+            for node in root_node:
+                if node[0][0].text.lower() == "home":
+                    continue
+                else:
+                    taxo.append(node[0][0].text)
+            taxo1 = taxo[0] if len(taxo) >= 1 else taxo1
+            taxo2 = taxo[1] if len(taxo) >= 2 else taxo2
+            taxo3 = taxo[2] if len(taxo) >= 3 else taxo3
+        except Exception as ex:
+            log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message="error while getting taxonomy :{}".format(ex))
+
         products = []
         i = 1
         while True:
@@ -73,6 +92,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=ex)
     return None
 
+get_inventory(None, None, None, "https://www.newlook.com/uk/womens/clothing/womens-activewear/sports-hoodies/c/uk-womens-clothing-sportswear-hoodies")
 
 def parse_newlook():
     try:
@@ -93,4 +113,3 @@ def parse_newlook():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.NEWLOOK, df=df)
-
