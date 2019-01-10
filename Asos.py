@@ -76,6 +76,50 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     return None
 
 
+def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
+    df["is_subcat"] = df.apply(lambda my_row:
+                               False
+                               if "accessories" in my_row["taxo2"].lower() or
+                                  "coats-jackets" in my_row["taxo2"].lower() or
+                                  "dresses" in my_row["taxo2"].lower() or
+                                  "hoodies-sweatshirts" in my_row["taxo2"].lower() or
+                                  "jackets-coats" in my_row["taxo2"].lower() or
+                                  "jeans" in my_row["taxo2"].lower() or
+                                  "jumpers-cardigans" in my_row["taxo2"].lower() or
+                                  "jumpsuits-playsuits" in my_row["taxo2"].lower() or
+                                  "lingerie-nightwear" in my_row["taxo2"].lower() or
+                                  "polo-shirts" in my_row["taxo2"].lower() or
+                                  "shirts" in my_row["taxo2"].lower() or
+                                  "shoes" in my_row["taxo2"].lower() or
+                                  "shoes-boots-trainers" in my_row["taxo2"].lower() or
+                                  "shorts" in my_row["taxo2"].lower() or
+                                  "skirts" in my_row["taxo2"].lower() or
+                                  "socks-tights" in my_row["taxo2"].lower() or
+                                  "suits" in my_row["taxo2"].lower() or
+                                  "suits-separates" in my_row["taxo2"].lower() or
+                                  "swimwear-beachwear" in my_row["taxo2"].lower() or
+                                  "tops" in my_row["taxo2"].lower() or
+                                  "tracksuits" in my_row["taxo2"].lower() or
+                                  "trousers-chinos" in my_row["taxo2"].lower() or
+                                  "trousers-leggings" in my_row["taxo2"].lower() or
+                                  "t-shirts-vests" in my_row["taxo2"].lower() or
+                                  "underwear-socks" in my_row["taxo2"].lower() or
+                                  "vests" in my_row["taxo2"].lower()
+                               else True, axis=1)
+
+    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
+
+    df_url_is_not_subcat = df.loc[df['is_subcat'] == False].copy()
+    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
+
+    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
+    return df
+
+
 def parse_asos():
     # get url to analyse
     try:
@@ -96,5 +140,11 @@ def parse_asos():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.ASOS, df=df)
-
+    try:
+        now = datetime.datetime.now()
+        save_output_before(shop=Shop.ASOS, df=df, now=now())
+        df = sort_and_save(df)
+        save_output_after(shop=Shop.ASOS, df=df, now=now)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
+        return

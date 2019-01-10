@@ -98,7 +98,7 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
     df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
 
-    df_url_is_not_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_not_subcat = df.loc[df['is_subcat'] == False].copy()
     df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
     df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
 
