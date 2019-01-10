@@ -84,6 +84,29 @@ def get_inventory(taxo1: str, url: str):
     return None
 
 
+def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
+    df["is_subcat"] = df.apply(lambda my_row:
+                               True
+                               if "extended sizes_extended sizes" in my_row["taxo2"].lower() or
+                                  "extendedsizes_extendedsizes" in my_row["taxo2"].lower() or
+                                  "h&m+ plus sizes_h&m+ plus sizes" in my_row["taxo2"].lower() or
+                                  "maternity wear_maternity wear" in my_row["taxo2"].lower() or
+                                  "nightwear_nightwear" in my_row["taxo2"].lower()
+                               else False, axis=1)
+
+    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
+
+    df_url_is_not_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
+
+    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
+    return df
+
+
 def parse_hm():
     try:
         df_url = get_categories()
@@ -100,4 +123,14 @@ def parse_hm():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.HM, df=df)
+
+    try:
+        now = datetime.datetime.now()
+        save_output_before(shop=Shop.HM, df=df, now=now())
+        df = sort_and_save(df)
+        save_output_after(shop=Shop.HM, df=df, now=now)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.HM, message=ex)
+        return
+
+

@@ -12,6 +12,7 @@ class ErrorLevel(Enum):
     MAJOR = "MAJOR"
     MAJOR_get_category = "MAJOR_get_category"
     MAJOR_get_inventory = "MAJOR_get_inventory"
+    MAJOR_save = "MAJOR_save"
     MEDIUM = "MEDIUM"
     MINOR = "MINOR"
     INFORMATION = "INFORMATION"
@@ -83,16 +84,19 @@ def save_output_before(shop: Shop, df: pd.DataFrame, now):
         index=False)
 
 
+def save_output_after(shop: Shop, df: pd.DataFrame, now):
+    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "{}_{}-{}-{}.csv".format(shop.name, now.year, now.month, now.day)),
+              index=False)
+
+
 def save_output(shop: Shop, df: pd.DataFrame, save_before=True):
     now = datetime.datetime.now()
-    if save_before:
-        save_output_before(shop=shop, df=df, now=now)
+    save_output_before(shop=shop, df=df, now=now)
 
     df = df.sort_values(by=['id', 'reference', 'name', "taxo1", "taxo2", "taxo3"])
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
 
-    df.to_csv(os.path.join(DIRECTORY_OUTPUT, "{}_{}-{}-{}.csv".format(shop.name, now.year, now.month, now.day)),
-              index=False)
+    save_output_after(shop=shop, df=df, now=now)
 
 
 def add_in_dictionary(shop: Shop, obj_id: str, reference: str, name: str, price, in_stock: bool, taxo1: str, taxo2: str,
