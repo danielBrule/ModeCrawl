@@ -42,27 +42,34 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message="error no cid with URL {}".format(url))
             return None
         cid = find.group(1)
-        json_url = \
-            "https://api.asos.com/product/search/v1/categories/{}?channel=mobile-web&country=GB" \
-            "&currency=GBP&keyStoreDataversion=fcnu4gt-12&lang=en&limit=5000&offset=0&rowlength=2&store=1".format(cid)
-        data = simple_get(json_url, USER_AGENT)
-        data = json.loads(data)
-
+        offset = 0
         products = []
-        for node in data["products"]:
-            try:
-                products.append(add_in_dictionary(shop=Shop.ASOS,
-                                                  obj_id=node["id"],
-                                                  reference=node["productCode"],
-                                                  name=node["title"] if "title" in node else node["name"],
-                                                  price=node["price"]["current"]["value"],
-                                                  in_stock=True,
-                                                  taxo1=taxo1,
-                                                  taxo2=taxo2,
-                                                  taxo3=taxo3,
-                                                  url="https://www.asos.com/" + node["url"]))
-            except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=ex)
+        while True:
+            json_url = \
+                "https://api.asos.com/product/search/v1/categories/{}?channel=mobile-web&country=GB" \
+                "&currency=GBP&keyStoreDataversion=fcnu4gt-12&lang=en&limit=5000&offset={}&" \
+                "rowlength=2&store=1".format(cid, offset)
+            data = simple_get(json_url, USER_AGENT)
+            data = json.loads(data)
+            nb_items = data["itemCount"]
+            if len(data["products"]) == 0:
+                break
+            for node in data["products"]:
+                try:
+                    products.append(add_in_dictionary(shop=Shop.ASOS,
+                                                      obj_id=node["id"],
+                                                      reference=node["productCode"],
+                                                      name=node["title"] if "title" in node else node["name"],
+                                                      price=node["price"]["current"]["value"],
+                                                      in_stock=True,
+                                                      taxo1=taxo1,
+                                                      taxo2=taxo2,
+                                                      taxo3=taxo3,
+                                                      url="https://www.asos.com/" + node["url"]))
+                except Exception as ex:
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=ex)
+            if len(products) >= nb_items:
+                break
         return pd.DataFrame(products)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=ex)

@@ -76,15 +76,20 @@ def log_error(level: ErrorLevel, shop: Shop, message: str):
         file.close()
 
 
-def save_output(shop: Shop, df: pd.DataFrame):
-    now = datetime.datetime.now()
-
+def save_output_before(shop: Shop, df: pd.DataFrame, now):
     df.to_csv(
-        os.path.join(DIRECTORY_OUTPUT_BEFORE_CLEAN, "{}_{}-{}-{}_before_clean.csv".format(shop.name, now.year, now.month, now.day)),
+        os.path.join(DIRECTORY_OUTPUT_BEFORE_CLEAN,
+                     "{}_{}-{}-{}_before_clean.csv".format(shop.name, now.year, now.month, now.day)),
         index=False)
 
-    df = df.sort_values(by=['id', 'reference', 'name', "taxo1", "taxo2", "taxo3"], na_position="first")
-    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="last")
+
+def save_output(shop: Shop, df: pd.DataFrame, save_before=True):
+    now = datetime.datetime.now()
+    if save_before:
+        save_output_before(shop=shop, df=df, now=now)
+
+    df = df.sort_values(by=['id', 'reference', 'name', "taxo1", "taxo2", "taxo3"])
+    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
 
     df.to_csv(os.path.join(DIRECTORY_OUTPUT, "{}_{}-{}-{}.csv".format(shop.name, now.year, now.month, now.day)),
               index=False)
