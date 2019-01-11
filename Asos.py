@@ -45,6 +45,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         offset = 0
         products = []
         while True:
+            offset = len(products)
             json_url = \
                 "https://api.asos.com/product/search/v1/categories/{}?channel=mobile-web&country=GB" \
                 "&currency=GBP&keyStoreDataversion=fcnu4gt-12&lang=en&limit=5000&offset={}&" \
@@ -107,15 +108,28 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
                                   "vests" in my_row["taxo2"].lower()
                                else True, axis=1)
 
+    #######################
     df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
     df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
 
+    df_url_is_subcat["is_ctas"] = df_url_is_subcat.apply(lambda my_row:
+                                                         True
+                                                         if "ctas" in my_row["taxo2"].lower()
+                                                         else False, axis=1)
+    df_url_is_subcat_ctas = df_url_is_subcat.loc[df_url_is_subcat['is_ctas'] == True].copy()
+    df_url_is_subcat_ctas = df_url_is_subcat_ctas.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_subcat_ctas = df_url_is_subcat_ctas.drop(["is_subcat", "is_ctas"], axis=1)
+
+    df_url_is_not_subcat_ctas = df_url_is_subcat.loc[df_url_is_subcat['is_ctas'] == False].copy()
+    df_url_is_not_subcat_ctas = df_url_is_not_subcat_ctas.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_not_subcat_ctas = df_url_is_not_subcat_ctas.drop(["is_subcat", "is_ctas"], axis=1)
+
+    #######################
     df_url_is_not_subcat = df.loc[df['is_subcat'] == False].copy()
     df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
     df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
 
-    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = pd.concat([df_url_is_not_subcat, df_url_is_not_subcat_ctas, df_url_is_subcat_ctas], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
 
@@ -123,11 +137,12 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
 def parse_asos():
     # get url to analyse
     try:
-        df_url = get_categories(URL_ASOS_HOME_MEN)
+        df_url_men = get_categories(URL_ASOS_HOME_MEN)
+        df_url_women = get_categories(URL_ASOS_HOME_WOMEN)
+        df_url = pd.concat([df_url_men, df_url_women])
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ASOS, message=ex)
         return
-    df_url = pd.concat([df_url, get_categories(URL_ASOS_HOME_WOMEN)])
 
     try:
         df_list = [get_inventory(taxo1=row["taxo1"],
@@ -142,7 +157,7 @@ def parse_asos():
     df = pd.concat(df_list)
     try:
         now = datetime.datetime.now()
-        save_output_before(shop=Shop.ASOS, df=df, now=now())
+        save_output_before(shop=Shop.ASOS, df=df, now=now)
         df = sort_and_save(df)
         save_output_after(shop=Shop.ASOS, df=df, now=now)
     except Exception as ex:

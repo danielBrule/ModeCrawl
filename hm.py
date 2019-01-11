@@ -126,7 +126,7 @@ def parse_hm():
 
     try:
         now = datetime.datetime.now()
-        save_output_before(shop=Shop.HM, df=df, now=now())
+        save_output_before(shop=Shop.HM, df=df, now=now)
         df = sort_and_save(df)
         save_output_after(shop=Shop.HM, df=df, now=now)
     except Exception as ex:
