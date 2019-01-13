@@ -105,7 +105,10 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
                                   "trousers-leggings" in my_row["taxo2"].lower() or
                                   "t-shirts-vests" in my_row["taxo2"].lower() or
                                   "underwear-socks" in my_row["taxo2"].lower() or
-                                  "vests" in my_row["taxo2"].lower()
+                                  "vests" in my_row["taxo2"].lower() or
+                                  "goingout" in my_row["taxo2"].lower() or
+                                  "petite" in my_row["taxo2"].lower() or
+                                  "tall" in my_row["taxo2"].lower()
                                else True, axis=1)
 
     #######################
@@ -163,3 +166,8 @@ def parse_asos():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
         return
+
+
+now = datetime.datetime.now()
+df = sort_and_save(pd.read_csv("tmp/before_clean/ASOS_2019-1-13_before_clean.csv"))
+save_output_after(shop=Shop.ASOS, df=df, now=now)

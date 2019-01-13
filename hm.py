@@ -87,9 +87,9 @@ def get_inventory(taxo1: str, url: str):
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     df["is_subcat"] = df.apply(lambda my_row:
                                True
-                               if "extended sizes_extended sizes" in my_row["taxo2"].lower() or
-                                  "extendedsizes_extendedsizes" in my_row["taxo2"].lower() or
-                                  "h&m+ plus sizes_h&m+ plus sizes" in my_row["taxo2"].lower() or
+                               if "extended size" in my_row["taxo2"].lower() or
+                                  "extendedsize" in my_row["taxo2"].lower() or
+                                  "plus sizes" in my_row["taxo2"].lower() or
                                   "maternity wear_maternity wear" in my_row["taxo2"].lower() or
                                   "nightwear_nightwear" in my_row["taxo2"].lower()
                                else False, axis=1)

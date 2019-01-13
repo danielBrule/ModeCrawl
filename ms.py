@@ -1,6 +1,6 @@
 from Parser.Utils import *
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 import re
 
@@ -23,7 +23,7 @@ def get_categories() -> pd.DataFrame:
         sitemap_product_root_node = ET.fromstring(sitemap_product_xml)
         for href in sitemap_product_root_node:
             sitemap_product_url_url.append(href[0].text)
-    sitemap_product_url_url = [x for x in sitemap_product_url_url if "categories" in x]
+    sitemap_product_url_url = [x for x in sitemap_product_url_url if "1facet" in x]
 
     category_url = []
     for taxonomy in sitemap_product_url_url:
@@ -42,6 +42,52 @@ def get_categories() -> pd.DataFrame:
                        "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),
                        "URL": url})
     output = pd.DataFrame(output)
+
+    output["is_subcat"] = output.apply(lambda my_row:
+                                       True
+                                       if 'kids-onesies' in my_row['taxo2'].lower() or
+                                          '3-for-2-kids-clothing' in my_row['taxo2'].lower() or
+                                          'easy-dressing' in my_row['taxo2'].lower() or
+                                          'new-in-kids-clothing' in my_row['taxo2'].lower() or
+                                          'character' in my_row['taxo2'].lower() or
+                                          'new-lower-prices' in my_row['taxo2'].lower() or
+                                          'easy-dressing-clothing-for-men' in my_row['taxo2'].lower() or
+                                          'new-in' in my_row['taxo2'].lower() or
+                                          'big-and-tall-guide' in my_row['taxo2'].lower() or
+                                          'nightwear-and-pyjamas' in my_row['taxo2'].lower() or
+                                          'fleece' in my_row['taxo2'].lower() or
+                                          'thinsulate' in my_row['taxo2'].lower() or
+                                          'linen-shop' in my_row['taxo2'].lower() or
+                                          'david-gandy-for-autograph' in my_row['taxo2'].lower() or
+                                          'cashmere' in my_row['taxo2'].lower() or
+                                          'mands-fa-suit' in my_row['taxo2'].lower() or
+                                          'sequencing' in my_row['taxo2'].lower() or
+                                          'wool' in my_row['taxo2'].lower() or
+                                          'twiggy' in my_row['taxo2'].lower() or
+                                          'workwear' in my_row['taxo2'].lower() or
+                                          'must-haves' in my_row['taxo2'].lower() or
+                                          'merino-wool' in my_row['taxo2'].lower() or
+                                          'great-value' in my_row['taxo2'].lower() or
+                                          'per-una' in my_row['taxo2'].lower() or
+                                          'classic' in my_row['taxo2'].lower() or
+                                          'limited-edition' in my_row['taxo2'].lower() or
+                                          'petite' in my_row['taxo2'].lower() or
+                                          'autograph' in my_row['taxo2'].lower() or
+                                          'mands-collection' in my_row['taxo2'].lower() or
+                                          'plus-size-clothing' in my_row['taxo2'].lower() or
+                                          'linen' in my_row['taxo2'].lower() or
+                                          'wedding-guest' in my_row['taxo2'].lower() or
+                                          'florals' in my_row['taxo2'].lower() or
+                                          'coords' in my_row['taxo2'].lower() or
+                                          'core-sequencing' in my_row['taxo2'].lower() or
+                                          'rosie-for-autograph-clothing' in my_row['taxo2'].lower() or
+                                          'athleisure' in my_row['taxo2'].lower()
+                                       else False, axis=1)
+
+    #######################
+    output = output.loc[output['is_subcat'] == False].copy()
+    output = output.drop(["is_subcat"], axis=1)
+
     return output
 
 
@@ -150,4 +196,3 @@ def parse_ms():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.MS, df=df)
-

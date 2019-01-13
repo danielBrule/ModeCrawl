@@ -88,19 +88,20 @@ def get_categories() -> []:
     return df
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str,url: str):
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     print("url: {}".format(url))
-    raw_html = simple_get(url)
+    raw_html = simple_get(url, USER_AGENT)
     html = BeautifulSoup(raw_html, 'html.parser')
 
     pattern = re.compile(r"window.zara.dataLayer\s+=\s+(\{.*?\});window.zara.viewPayload = window.zara.dataLayer")
     scripts = html.find_all("script", text=pattern)
     try:
         products = []
+        print("scripts {}".format(len(scripts)))
         for script in scripts:
             data = pattern.search(script.text).group(1)
             data = json.loads(data)
-
+            print(len(data["productGroups"][0]["products"]))
             for node in data["productGroups"][0]["products"]:
                 try:
                     if "price" in node:
@@ -154,4 +155,3 @@ def parse_zara():
     save_output(shop=Shop.ZARA, df=df)
 
 
-parse_zara()

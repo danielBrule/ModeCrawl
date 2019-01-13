@@ -37,7 +37,6 @@ def get_categories_new(category_url: str) -> pd.DataFrame:
     df["taxo5"] = new[5]
     df["taxo6"] = new[6]
 
-
     df = df.loc[df["taxo1"].isin(["womens", "mens", "teens"])]
     df = df.loc[
         df["taxo2"].isin(["accessories", "clothing", "footwear", "bagsaccessories", "backtoschool", "essentials",
@@ -92,6 +91,32 @@ def get_inventory(taxo1, taxo2, taxo3, url: str):
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=ex)
     return None
 
+def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
+    df["is_subcat"] = df.apply(lambda my_row:
+                               True
+                               if "brands" in my_row["taxo3"].lower() or
+                                  "collections" in my_row["taxo3"].lower() or
+                                  "department" in my_row["taxo3"].lower() or
+                                  "viewall" in my_row["taxo3"].lower() or
+                                  "image" in my_row["taxo3"].lower() or
+                                  "style" in my_row["taxo3"].lower()
+                               else False, axis=1)
+    #######################
+    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
+
+    #######################
+    df_url_is_not_subcat = df.loc[df['is_subcat'] == False].copy()
+    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
+
+    #######################
+    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
+    return df
+
+
 
 def parse_newlook():
     try:
@@ -99,6 +124,8 @@ def parse_newlook():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.NEWLOOK, message=ex)
         return
+
+    df_url = df_url.head(2)
 
     try:
         df_list = [get_inventory(taxo1=row["taxo1"],
@@ -111,4 +138,13 @@ def parse_newlook():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.NEWLOOK, df=df)
+    try:
+        now = datetime.datetime.now()
+        save_output_before(shop=Shop.NEWLOOK, df=df, now=now)
+        df = sort_and_save(df)
+        save_output_after(shop=Shop.NEWLOOK, df=df, now=now)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=ex)
+        return
+
+parse_newlook()

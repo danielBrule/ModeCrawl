@@ -7,45 +7,47 @@ from bs4 import BeautifulSoup
 
 URL_TKMAXX_HOME_SITEMAP = "https://www.tkmaxx.com/uk/en/sitemap.xml"
 URL_TKMAXX_HOME = "https://www.tkmaxx.com/uk/en/"
+URL_MS_HOME = "https://www.marksandspencer.com/sitemap.xml"
 
 
 def get_categories() -> pd.DataFrame:
+    sitemap_xml = simple_get(URL_TKMAXX_HOME_SITEMAP)
+    sitemap_root_node = ET.fromstring(sitemap_xml)
+
+    sitemap_url = []
+    for href in sitemap_root_node:
+        sitemap_url.append(href[0].text)
+
+    sitemap_url = [x for x in sitemap_url if "Category-en-GBP" in x]
+    sitemap_product_xml = simple_get(sitemap_url[0])
+    sitemap_product_root_node = ET.fromstring(sitemap_product_xml)
+
+    category_url = []
+    for href in sitemap_product_root_node:
+        category_url.append(href[0].text)
+
     output = []
-
-    raw_html = simple_get(URL_TKMAXX_HOME)
-    html = BeautifulSoup(raw_html, 'html.parser')
-
-    results = html.findAll(name="div", attrs={"class": "sub-navigation-section__inner"})
-
-    for node in results:
-        node = ET.fromstring(str(node))
-        taxo1 = node[0].attrib["data-categoryparent"]
-        taxo2 = node[0].attrib["data-category"]
-        for subnode in node[1]:
-            try:
-                if "class" in subnode.attrib and \
-                        " sub-navigation-section-column column-2 " == subnode.attrib["class"]:
-                    for subsubnode in subnode[0]:
-                        if len(subsubnode) > 0 and "href" in subsubnode[0].attrib and \
-                                "data-category" in subsubnode.attrib:
-                            taxo3 = subsubnode.attrib["data-category"]
-                            url = subsubnode[0].attrib["href"]
-                            output.append({"taxo1": taxo1,
-                                           "taxo2": taxo2,
-                                           "taxo3": taxo3,
-                                           "URL": url})
-                elif len(subnode) > 0 and "href" in subnode[0].attrib and "data-category" in subnode.attrib:
-                    taxo3 = subnode.attrib["data-category"]
-                    url = subnode[0].attrib["href"]
-                    output.append({"taxo1": taxo1,
-                                   "taxo2": taxo2,
-                                   "taxo3": taxo3,
-                                   "URL": url})
-            except Exception as ex:
-                print("{}".format(ex))
+    for url in category_url:
+        taxonomy = url.replace('https://www.tkmaxx.com/uk/en/', '')
+        taxonomy = taxonomy.split("/")
+        output.append({"taxo1": taxonomy[0],
+                       "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
+                       "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),
+                       "URL": url})
     output = pd.DataFrame(output)
-    output = output.loc[output["taxo1"].isin(["Men", "Women", "Kids & Toys"])]
+    output["is_subcat"] = output.apply(lambda my_row:
+                                       True
+                                       if "men" in my_row["taxo1"].lower() or
+                                          "women" in my_row["taxo1"].lower() or
+                                          "kids" in my_row["taxo1"].lower()
+                                       else False,
+                                       axis=1)
+    output = output.loc[output['is_subcat'] == True].copy()
+    output = output.drop(["is_subcat"], axis=1)
+
     return output
+
+
 
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
@@ -82,7 +84,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                       taxo3=taxo3,
                                                       url="https://www.tkmaxx.com/uk/" + node['url']))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.NEWLOOK, message=ex)
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.TKMAXX, message=ex)
             i += 1
             if i >= number_of_pages:
                 break
@@ -90,6 +92,26 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=ex)
     return None
+
+def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
+    df["is_subcat"] = df.apply(lambda my_row:
+                               False
+                               if "c" == my_row["taxo2"].lower() or
+                                  "c" == my_row["taxo3"].lower()
+                               else True, axis=1)
+
+    #######################
+    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
+    #######################
+    df_url_is_not_subcat = df.loc[df['is_subcat'] == True].copy()
+    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
+
+    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
+    return df
 
 
 def parse_tkmaxx():
@@ -111,6 +133,11 @@ def parse_tkmaxx():
         return
 
     df = pd.concat(df_list)
-    save_output(shop=Shop.TKMAXX, df=df)
-
-
+    try:
+        now = datetime.datetime.now()
+        save_output_before(shop=Shop.TKMAXX, df=df, now=now)
+        df = sort_and_save(df)
+        save_output_after(shop=Shop.TKMAXX, df=df, now=now)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=ex)
+        return

@@ -58,7 +58,6 @@ def create_output_df(df_man: pd.DataFrame, df_woman: pd.DataFrame, shop: Shop) -
     df.loc[df.taxo3 == taxo_lvl3.WOMEN_JEANS.value, "taxo2"] = taxo_lvl2.BOTTOM.value
 
     tmp = df[df.taxo3 != ""]
-    tmp.to_csv("todel_" + shop.value + ".csv")
     return df
 
 

@@ -143,7 +143,12 @@ def parse_gap():
         # put sales categories at the end
         df_url["is_sale"] = df_url.apply(lambda my_row:
                                          True
-                                         if "sale" in my_row["taxo3"].lower() or
+                                         if "sale" in my_row["taxo2"].lower() or
+                                            "sale" in my_row["taxo3"].lower() or
+                                            "deals" in my_row["taxo3"].lower() or
+                                            "new-and-now" in my_row["taxo2"].lower() or
+                                            my_row["taxo2"].lower().startswith("last-") or
+                                            my_row["taxo2"].lower().startswith("up-to-") or
                                             my_row["taxo3"].lower().startswith("last-") or
                                             my_row["taxo3"].lower().startswith("up-to-")
                                          else False, axis=1)
