@@ -125,8 +125,6 @@ def parse_newlook():
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.NEWLOOK, message=ex)
         return
 
-    df_url = df_url.head(2)
-
     try:
         df_list = [get_inventory(taxo1=row["taxo1"],
                                  taxo2=row["taxo2"],
@@ -147,4 +145,3 @@ def parse_newlook():
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=ex)
         return
 
-parse_newlook()
