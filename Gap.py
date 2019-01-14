@@ -25,12 +25,13 @@ def get_categories() -> pd.DataFrame:
         output.append({"taxo1": taxonomy[0],
                        "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
                        "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),
+                       "taxo4": (taxonomy[3] if len(taxonomy) > 3 else None),
                        "URL": url})
     output = pd.DataFrame(output)
     return output
 
 
-def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
+def parse_json(taxo1: str, taxo2: str, taxo3: str, taxo4: str, output: [], url: str) -> []:
     data = simple_get(url)
     data = json.loads(data)
     for node in data["productHits"]:
@@ -54,6 +55,7 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, output: [], url: str) -> []:
                                             taxo1=taxo1,
                                             taxo2=taxo2,
                                             taxo3=taxo3,
+                                            taxo4=taxo4,
                                             url=None))
         except Exception as ex:
             log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="PARSE JSON {}: {}".format(url, ex))
@@ -86,7 +88,7 @@ class GapListProductsAlreadyParsedSingleton:
         return output
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str):
     print("url {}: {}".format(Shop.GAP.value, url))
     try:
         products = []
@@ -112,14 +114,14 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             if i % 40 == 0:
                 url = url[:-3] + BASE_URL_END
                 try:
-                    output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, output=output, url=url)
+                    output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, taxo4=taxo4, output=output, url=url)
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
 
         if i % 40 != 0:
             url = url[:-3] + BASE_URL_END
             try:
-                output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, output=output, url=url)
+                output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, taxo4=taxo4, output=output, url=url)
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
 
@@ -154,7 +156,7 @@ def parse_gap():
                                          else False, axis=1)
 
         df_url_sale = df_url.loc[df_url['is_sale'] == True].copy()
-        df_url_sale = df_url_sale.sort_values(by=["taxo1", "taxo2", "taxo3"])
+        df_url_sale = df_url_sale.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
         df_url_sale = df_url_sale.drop(["is_sale"], axis=1)
 
         df_url_no_sale = df_url.loc[df_url['is_sale'] == False].copy()
@@ -169,11 +171,11 @@ def parse_gap():
 
         df_url_no_sale_sub_cat = df_url_no_sale.loc[df_url_no_sale['is_subcat'] == True].copy()
         df_url_no_sale_sub_cat = df_url_no_sale_sub_cat.drop(["is_sale", "is_subcat"], axis=1)
-        df_url_no_sale_sub_cat = df_url_no_sale_sub_cat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+        df_url_no_sale_sub_cat = df_url_no_sale_sub_cat.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
 
         df_url_no_sale_no_sub_cat = df_url_no_sale.loc[df_url_no_sale['is_subcat'] == False].copy()
         df_url_no_sale_no_sub_cat = df_url_no_sale_no_sub_cat.drop(["is_sale", "is_subcat"], axis=1)
-        df_url_no_sale_no_sub_cat = df_url_no_sale_no_sub_cat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+        df_url_no_sale_no_sub_cat = df_url_no_sale_no_sub_cat.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
 
         df_url = pd.concat([df_url_no_sale_no_sub_cat, df_url_no_sale_sub_cat, df_url_sale], sort=False)
 
@@ -185,6 +187,7 @@ def parse_gap():
         df_list = [get_inventory(taxo1=row["taxo1"],
                                  taxo2=row["taxo2"],
                                  taxo3=row["taxo3"],
+                                 taxo4=row["taxo4"],
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:

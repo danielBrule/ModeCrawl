@@ -78,61 +78,26 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
 
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
-    df["is_subcat"] = df.apply(lambda my_row:
-                               False
-                               if "accessories" in my_row["taxo2"].lower() or
-                                  "coats-jackets" in my_row["taxo2"].lower() or
-                                  "dresses" in my_row["taxo2"].lower() or
-                                  "hoodies-sweatshirts" in my_row["taxo2"].lower() or
-                                  "jackets-coats" in my_row["taxo2"].lower() or
-                                  "jeans" in my_row["taxo2"].lower() or
-                                  "jumpers-cardigans" in my_row["taxo2"].lower() or
-                                  "jumpsuits-playsuits" in my_row["taxo2"].lower() or
-                                  "lingerie-nightwear" in my_row["taxo2"].lower() or
-                                  "polo-shirts" in my_row["taxo2"].lower() or
-                                  "shirts" in my_row["taxo2"].lower() or
-                                  "shoes" in my_row["taxo2"].lower() or
-                                  "shoes-boots-trainers" in my_row["taxo2"].lower() or
-                                  "shorts" in my_row["taxo2"].lower() or
-                                  "skirts" in my_row["taxo2"].lower() or
-                                  "socks-tights" in my_row["taxo2"].lower() or
-                                  "suits" in my_row["taxo2"].lower() or
-                                  "suits-separates" in my_row["taxo2"].lower() or
-                                  "swimwear-beachwear" in my_row["taxo2"].lower() or
-                                  "tops" in my_row["taxo2"].lower() or
-                                  "tracksuits" in my_row["taxo2"].lower() or
-                                  "trousers-chinos" in my_row["taxo2"].lower() or
-                                  "trousers-leggings" in my_row["taxo2"].lower() or
-                                  "t-shirts-vests" in my_row["taxo2"].lower() or
-                                  "underwear-socks" in my_row["taxo2"].lower() or
-                                  "vests" in my_row["taxo2"].lower() or
-                                  "goingout" in my_row["taxo2"].lower() or
-                                  "petite" in my_row["taxo2"].lower() or
-                                  "tall" in my_row["taxo2"].lower()
-                               else True, axis=1)
+    conditions_1 = {"taxo2":
+                        {"operator": Comparison.IN,
+                         "value": ["accessories", "coats-jackets", "dresses", "hoodies-sweatshirts", "jackets-coats",
+                                   "jeans", "jumpers-cardigans", "jumpsuits-playsuits", "lingerie-nightwear",
+                                   "polo-shirts", "shirts", "shoes", "shoes-boots-trainers", "shorts", "skirts",
+                                   "socks-tights", "suits", "suits-separates", "swimwear-beachwear", "tops",
+                                   "tracksuits", "trousers-chinos", "trousers-leggings", "t-shirts-vests",
+                                   "underwear-socks", "vests", "goingout", "petite", "tall"]
+                         }}
 
-    #######################
-    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
-    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    output = split_and_sort(df=df, true_first=True, conditions=conditions_1)
+    df_1 = output[0]
+    df_2 = output[1]
 
-    df_url_is_subcat["is_ctas"] = df_url_is_subcat.apply(lambda my_row:
-                                                         True
-                                                         if "ctas" in my_row["taxo2"].lower()
-                                                         else False, axis=1)
-    df_url_is_subcat_ctas = df_url_is_subcat.loc[df_url_is_subcat['is_ctas'] == True].copy()
-    df_url_is_subcat_ctas = df_url_is_subcat_ctas.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_subcat_ctas = df_url_is_subcat_ctas.drop(["is_subcat", "is_ctas"], axis=1)
+    conditions_2 = {"taxo2": ["ctas"]}
+    output = split_and_sort(df=df_2, true_first=False, conditions=conditions_2)
+    df_2 = output[0]
+    df_3 = output[1]
 
-    df_url_is_not_subcat_ctas = df_url_is_subcat.loc[df_url_is_subcat['is_ctas'] == False].copy()
-    df_url_is_not_subcat_ctas = df_url_is_not_subcat_ctas.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_not_subcat_ctas = df_url_is_not_subcat_ctas.drop(["is_subcat", "is_ctas"], axis=1)
-
-    #######################
-    df_url_is_not_subcat = df.loc[df['is_subcat'] == False].copy()
-    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
-
-    df = pd.concat([df_url_is_not_subcat, df_url_is_not_subcat_ctas, df_url_is_subcat_ctas], sort=False)
+    df = pd.concat([df_1, df_2, df_3], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
 
@@ -166,8 +131,3 @@ def parse_asos():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
         return
-
-
-now = datetime.datetime.now()
-df = sort_and_save(pd.read_csv("tmp/before_clean/ASOS_2019-1-13_before_clean.csv"))
-save_output_after(shop=Shop.ASOS, df=df, now=now)

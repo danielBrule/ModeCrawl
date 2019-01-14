@@ -2,7 +2,6 @@ from Parser.Utils import *
 import pandas as pd
 import xml.etree.ElementTree as ET
 import json
-import re
 from bs4 import BeautifulSoup
 
 URL_TKMAXX_HOME_SITEMAP = "https://www.tkmaxx.com/uk/en/sitemap.xml"
@@ -48,8 +47,6 @@ def get_categories() -> pd.DataFrame:
     return output
 
 
-
-
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     url = "https://www.tkmaxx.com/" + url
     print("url: {}".format(url))
@@ -93,23 +90,23 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=ex)
     return None
 
+
+
+
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
-    df["is_subcat"] = df.apply(lambda my_row:
-                               False
-                               if "c" == my_row["taxo2"].lower() or
-                                  "c" == my_row["taxo3"].lower()
-                               else True, axis=1)
+    conditions = {"taxo2":
+                      {"operator": Comparison.EQUAL,
+                       "value": ["c"]
+                       },
+                  "taxo3":
+                      {"operator": Comparison.EQUAL,
+                       "value": ["c"]
+                       }
+                  }
 
-    #######################
-    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
-    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
-    #######################
-    df_url_is_not_subcat = df.loc[df['is_subcat'] == True].copy()
-    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
+    output = split_and_sort(df=df, true_first=False, conditions=conditions)
 
-    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = pd.concat([output[0], output[1]], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
 
@@ -141,3 +138,5 @@ def parse_tkmaxx():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=ex)
         return
+
+

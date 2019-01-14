@@ -91,31 +91,19 @@ def get_inventory(taxo1, taxo2, taxo3, url: str):
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=ex)
     return None
 
+
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
-    df["is_subcat"] = df.apply(lambda my_row:
-                               True
-                               if "brands" in my_row["taxo3"].lower() or
-                                  "collections" in my_row["taxo3"].lower() or
-                                  "department" in my_row["taxo3"].lower() or
-                                  "viewall" in my_row["taxo3"].lower() or
-                                  "image" in my_row["taxo3"].lower() or
-                                  "style" in my_row["taxo3"].lower()
-                               else False, axis=1)
-    #######################
-    df_url_is_subcat = df.loc[df['is_subcat'] == True].copy()
-    df_url_is_subcat = df_url_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_subcat = df_url_is_subcat.drop(["is_subcat"], axis=1)
+    conditions = {"taxo3":
+                      {"operator": Comparison.IN,
+                       "value":
+                           ["brands", "collections", "department", "viewall", "image"]
+                       }}
 
-    #######################
-    df_url_is_not_subcat = df.loc[df['is_subcat'] == False].copy()
-    df_url_is_not_subcat = df_url_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_url_is_not_subcat = df_url_is_not_subcat.drop(["is_subcat"], axis=1)
+    output = split_and_sort(df=df, true_first=False, conditions=conditions)
 
-    #######################
-    df = pd.concat([df_url_is_not_subcat, df_url_is_subcat], sort=False)
+    df = pd.concat([output[0], output[1]], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
-
 
 
 def parse_newlook():
@@ -144,4 +132,5 @@ def parse_newlook():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=ex)
         return
+
 

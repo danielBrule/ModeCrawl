@@ -29,6 +29,12 @@ class Shop(Enum):
     GAP = "GAP"
 
 
+class Comparison(Enum):
+    IN = "IN"
+    START_WITH = "START_WITH"
+    EQUAL = "EQUAL"
+
+
 DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
 DIRECTORY_OUTPUT_BEFORE_CLEAN = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp/before_clean"
 DIRECTORY_ERROR = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
@@ -89,7 +95,7 @@ def save_output_after(shop: Shop, df: pd.DataFrame, now):
               index=False)
 
 
-def save_output(shop: Shop, df: pd.DataFrame, save_before=True):
+def save_output(shop: Shop, df: pd.DataFrame):
     now = datetime.datetime.now()
     save_output_before(shop=shop, df=df, now=now)
 
@@ -100,7 +106,7 @@ def save_output(shop: Shop, df: pd.DataFrame, save_before=True):
 
 
 def add_in_dictionary(shop: Shop, obj_id: str, reference: str, name: str, price, in_stock: bool, taxo1: str, taxo2: str,
-                      taxo3: str, url: str) -> {}:
+                      taxo3: str, taxo4: str = None, url: str = None) -> {}:
     return {"shop": shop.name,
             "id": obj_id,
             "reference": reference,
@@ -110,5 +116,47 @@ def add_in_dictionary(shop: Shop, obj_id: str, reference: str, name: str, price,
             "taxo1": taxo1,
             "taxo2": taxo2,
             "taxo3": taxo3,
+            "taxo4": taxo4,
             "URL": url,
             "date": datetime.datetime.now()}
+
+
+def is_condition_true(input_value: [], conditions: {}):
+    for taxo_level, value in conditions.items():
+
+        if value["operator"] == Comparison.EQUAL:
+            for comp_value in value["value"]:
+                if comp_value.lower() == input_value[taxo_level].lower():
+                    return True
+
+        elif value["operator"] == Comparison.IN:
+            for comp_value in value["value"]:
+                if comp_value.lower() in input_value[taxo_level].lower():
+                    return True
+
+        elif value["operator"] == Comparison.START_WITH:
+            for comp_value in value["value"]:
+                if input_value[taxo_level].lower().startswith(comp_value.lower()):
+                    return True
+        else:
+            raise Exception("invalid comparison operator: {}".format(value["operator"]))
+    return False
+
+
+def split_and_sort(df: pd.DataFrame, true_first: bool, conditions: {}) -> [pd.DataFrame]:
+    df["split_val"] = df.apply(lambda my_row:
+                               is_condition_true(input_value=my_row, conditions=conditions),
+                               axis=1)
+
+    df_1 = df.loc[df['split_val'] == True].copy()
+    df_1 = df_1.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_1 = df_1.drop(["split_val"], axis=1)
+
+    df_2 = df.loc[df['split_val'] == False].copy()
+    df_2 = df_2.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    df_2 = df_2.drop(["split_val"], axis=1)
+
+    if true_first:
+        return [df_1, df_2]
+    else:
+        return [df_2, df_1]
