@@ -4,98 +4,34 @@ from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 import re
 
-URL_MS_HOME = "https://www.marksandspencer.com/sitemap.xml"
-
-# TODO
-# get all node
-# <a ... data-cmspot-id="SC_Level_1_11563899" class="nav-primary__menu-link">
-# get all nodes
-# < div data - mns - sub - navigation - menu = "SC_Level_1_11563899" id = "SC_Level_1_11563899">
-# parse them
+URL_MS_HOME = "https://www.marksandspencer.com"
+URL_MS_HOME2 = "https://www.marksandspencer.com"
 
 
 def get_categories() -> pd.DataFrame:
-    sitemap_xml = simple_get(URL_MS_HOME)
-    sitemap_root_node = ET.fromstring(sitemap_xml)
-
-    sitemap_url = []
-    for href in sitemap_root_node:
-        sitemap_url.append(href[0].text)
-
-    sitemap_url = [x for x in sitemap_url if "men" in x or "women" in x or "kids" in x]
-
-    sitemap_product_url_url = []
-    for taxonomy in sitemap_url:
-        sitemap_product_xml = simple_get(taxonomy)
-        sitemap_product_root_node = ET.fromstring(sitemap_product_xml)
-        for href in sitemap_product_root_node:
-            sitemap_product_url_url.append(href[0].text)
-    sitemap_product_url_url = [x for x in sitemap_product_url_url if "1facet" in x]
-
-    category_url = []
-    for taxonomy in sitemap_product_url_url:
-        sitemap_product_xml = simple_get(taxonomy)
-        sitemap_product_category_root_node = ET.fromstring(sitemap_product_xml)
-        for href in sitemap_product_category_root_node:
-            category_url.append(href[0].text)
-    category_url = [x for x in category_url if "/l/" in x]
-
+    raw_html = simple_get(URL_MS_HOME2)
+    html = BeautifulSoup(raw_html, 'html.parser')
     output = []
-    for url in category_url:
-        taxonomy = url.replace('https://www.marksandspencer.com/l/', '')
-        taxonomy = taxonomy.split("/")
-        output.append({"taxo1": taxonomy[0],
-                       "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
-                       "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),
-                       "URL": url})
-    output = pd.DataFrame(output)
 
-    output["is_subcat"] = output.apply(lambda my_row:
-                                       True
-                                       if 'kids-onesies' in my_row['taxo2'].lower() or
-                                          '3-for-2-kids-clothing' in my_row['taxo2'].lower() or
-                                          'easy-dressing' in my_row['taxo2'].lower() or
-                                          'new-in-kids-clothing' in my_row['taxo2'].lower() or
-                                          'character' in my_row['taxo2'].lower() or
-                                          'new-lower-prices' in my_row['taxo2'].lower() or
-                                          'easy-dressing-clothing-for-men' in my_row['taxo2'].lower() or
-                                          'new-in' in my_row['taxo2'].lower() or
-                                          'big-and-tall-guide' in my_row['taxo2'].lower() or
-                                          'nightwear-and-pyjamas' in my_row['taxo2'].lower() or
-                                          'fleece' in my_row['taxo2'].lower() or
-                                          'thinsulate' in my_row['taxo2'].lower() or
-                                          'linen-shop' in my_row['taxo2'].lower() or
-                                          'david-gandy-for-autograph' in my_row['taxo2'].lower() or
-                                          'cashmere' in my_row['taxo2'].lower() or
-                                          'mands-fa-suit' in my_row['taxo2'].lower() or
-                                          'sequencing' in my_row['taxo2'].lower() or
-                                          'wool' in my_row['taxo2'].lower() or
-                                          'twiggy' in my_row['taxo2'].lower() or
-                                          'workwear' in my_row['taxo2'].lower() or
-                                          'must-haves' in my_row['taxo2'].lower() or
-                                          'merino-wool' in my_row['taxo2'].lower() or
-                                          'great-value' in my_row['taxo2'].lower() or
-                                          'per-una' in my_row['taxo2'].lower() or
-                                          'classic' in my_row['taxo2'].lower() or
-                                          'limited-edition' in my_row['taxo2'].lower() or
-                                          'petite' in my_row['taxo2'].lower() or
-                                          'autograph' in my_row['taxo2'].lower() or
-                                          'mands-collection' in my_row['taxo2'].lower() or
-                                          'plus-size-clothing' in my_row['taxo2'].lower() or
-                                          'linen' in my_row['taxo2'].lower() or
-                                          'wedding-guest' in my_row['taxo2'].lower() or
-                                          'florals' in my_row['taxo2'].lower() or
-                                          'coords' in my_row['taxo2'].lower() or
-                                          'core-sequencing' in my_row['taxo2'].lower() or
-                                          'rosie-for-autograph-clothing' in my_row['taxo2'].lower() or
-                                          'athleisure' in my_row['taxo2'].lower()
-                                       else False, axis=1)
-
-    #######################
-    output = output.loc[output['is_subcat'] == False].copy()
-    output = output.drop(["is_subcat"], axis=1)
-
-    return output
+    results = html.find_all(name="a")
+    output = []
+    for result in results:
+        root_node = ET.fromstring(str(result))
+        if "href" in root_node.attrib and \
+                (root_node.attrib["href"].startswith("/l/men/") or
+                 root_node.attrib["href"].startswith("/l/women/") or
+                 root_node.attrib["href"].startswith("/l/kids/") or
+                 root_node.attrib["href"].startswith("/l/lingerie/")) and \
+                "new-in" not in root_node.attrib["href"]:
+            url = root_node.attrib["href"].split("?")[0]
+            taxonomy = url.split("/")
+            output.append({"taxo1": taxonomy[2],
+                           "taxo2": (taxonomy[3] if len(taxonomy) > 3 else None),
+                           "taxo3": (taxonomy[4] if len(taxonomy) > 4 else None),
+                           "URL": URL_MS_HOME + url})
+    output_df = pd.DataFrame(output)
+    output_df = output_df.drop_duplicates()
+    return output_df
 
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
