@@ -89,10 +89,22 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
                       {"operator": Comparison.IN,
                        "value": ["extended size", "extendedsize", "plus sizes", "maternity wear_maternity wear",
                                  "nightwear_nightwear"]}}
+    conditions_2 = {"taxo2":
+                      {"operator": Comparison.IN,
+                       "value": ["bottom", "TOPS_VIEW_ALL"]}}
 
-    output = split_and_sort(df=df, true_first=False, conditions=conditions)
+    output_1 = split_and_sort(df=df, true_first=False, conditions=conditions)
 
-    df = pd.concat([output[0], output[1]], sort=False)
+    df_1 = output_1[0]
+    df_2 = output_1[1]
+
+    output_2 = split_and_sort(df=df_1, true_first=False, conditions=conditions_2)
+    df_1_1 = output_2[0]
+    df_1_2 = output_2[1]
+
+    return pd.concat([df_1_1, df_1_2, df_2], sort=False)
+
+
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
 

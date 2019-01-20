@@ -26,6 +26,7 @@ def parse_ul_node(main_node: ET, taxo: []) -> pd.DataFrame:
             output.append({"taxo1": taxo_tmp[0],
                            "taxo2": taxo_tmp[1] if len(taxo_tmp) >= 2 else None,
                            "taxo3": taxo_tmp[2] if len(taxo_tmp) >= 3 else None,
+                           "taxo4": taxo_tmp[3] if len(taxo_tmp) >= 4 else None,
                            "URL": node[0].attrib[URL]})
             if len(node) > 1:
                 for subnode in node[1].iter():
@@ -50,39 +51,19 @@ def get_categories() -> []:
     #######################
 
     output = output.loc[output["taxo1"].isin(["WOMAN", "MAN", "KIDS"])]
-
     output["taxo2"] = output["taxo2"].apply(str)
-    output["is_subcat"] = output.apply(lambda my_row:
-                                       False
-                                       if "ACCESSORIES" in my_row["taxo2"].upper() or
-                                          "BLAZERS" in my_row["taxo2"].upper() or
-                                          "COATS" in my_row["taxo2"].upper() or
-                                          "DRESSES" in my_row["taxo2"].upper() or
-                                          "JACKETS" in my_row["taxo2"].upper() or
-                                          "JEANS" in my_row["taxo2"].upper() or
-                                          "KNITWEAR" in my_row["taxo2"].upper() or
-                                          "POLOS" in my_row["taxo2"].upper() or
-                                          "SHIRTS" in my_row["taxo2"].upper() or
-                                          "SHIRTS | BLOUSES" in my_row["taxo2"].upper() or
-                                          "SHOES " in my_row["taxo2"].upper() or
-                                          "SKIRTS" in my_row["taxo2"].upper() or
-                                          "SHORTS" in my_row["taxo2"].upper() or
-                                          "SUITS" in my_row["taxo2"].upper() or
-                                          "SWEATSHIRTS" in my_row["taxo2"].upper() or
-                                          "TROUSERS" in my_row["taxo2"].upper() or
-                                          "T-SHIRTS" in my_row["taxo2"].upper()
-                                       else True,
-                                       axis=1)
-    #######################
-    df_is_subcat = output.loc[output['is_subcat'] == True].copy()
-    df_is_subcat = df_is_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_is_subcat = df_is_subcat.drop(["is_subcat"], axis=1)
-    #######################
-    df_is_not_subcat = output.loc[output['is_subcat'] == False].copy()
-    df_is_not_subcat = df_is_not_subcat.sort_values(by=["taxo1", "taxo2", "taxo3"])
-    df_is_not_subcat = df_is_not_subcat.drop(["is_subcat"], axis=1)
 
-    df = pd.concat([df_is_not_subcat, df_is_subcat], sort=False)
+    conditions = {"taxo2":
+                      {"operator": Comparison.IN,
+                       "value":
+                           ["ACCESSORIES", "BLAZERS", "COATS", "DRESSES", "JACKETS", "JEANS", "KNITWEAR", "POLOS",
+                            "SHIRTS", "SHIRTS | BLOUSES", "SHOES ", "SKIRTS", "SHORTS", "SUITS", "SWEATSHIRTS",
+                            "TROUSERS", "T-SHIRTS"]
+                       }
+                  }
+    output = split_and_sort(df=output, true_first=True, conditions=conditions)
+
+    df = pd.concat([output[0], output[1]], sort=False)
     df = df.drop_duplicates(subset=['URL'], keep="first")
 
     return df
@@ -134,6 +115,22 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     return None
 
 
+def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
+    conditions = {"taxo2":
+                      {"operator": Comparison.IN,
+                       "value":
+                           ["FROM ", "Shoes | Bags", "NEW IN", "Collection", "Basics", "DRESS TIME", "JOIN LIFE",
+                            "MUM", "MUST HAVE", "None"]
+                       }
+                  }
+
+    output = split_and_sort(df=df, true_first=False, conditions=conditions)
+
+    df = pd.concat([output[0], output[1]], sort=False)
+    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
+    return df
+
+
 def parse_zara():
     try:
         df_url = get_categories()
@@ -152,6 +149,13 @@ def parse_zara():
         log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ZARA, message=ex)
         return
     df = pd.concat(df_list)
-    save_output(shop=Shop.ZARA, df=df)
 
+    try:
+        now = datetime.datetime.now()
+        save_output_before(shop=Shop.ZARA, df=df, now=now)
+        df = sort_and_save(df)
+        save_output_after(shop=Shop.ZARA, df=df, now=now)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ZARA, message=ex)
+        return
 

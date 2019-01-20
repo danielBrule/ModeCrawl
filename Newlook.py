@@ -96,8 +96,14 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     conditions = {"taxo3":
                       {"operator": Comparison.IN,
                        "value":
-                           ["brands", "collections", "department", "viewall", "image"]
-                       }}
+                           ["brands", "collection", "department", "viewall", "image"]
+                       },
+                  "taxo3":
+                      {"operator": Comparison.EQUAL,
+                       "value":
+                           ["dept", "oc", "newin"]
+                       }
+                  }
 
     output = split_and_sort(df=df, true_first=False, conditions=conditions)
 

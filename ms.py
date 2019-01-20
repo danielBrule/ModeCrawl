@@ -6,6 +6,13 @@ import re
 
 URL_MS_HOME = "https://www.marksandspencer.com/sitemap.xml"
 
+# TODO
+# get all node
+# <a ... data-cmspot-id="SC_Level_1_11563899" class="nav-primary__menu-link">
+# get all nodes
+# < div data - mns - sub - navigation - menu = "SC_Level_1_11563899" id = "SC_Level_1_11563899">
+# parse them
+
 
 def get_categories() -> pd.DataFrame:
     sitemap_xml = simple_get(URL_MS_HOME)

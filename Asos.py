@@ -92,7 +92,10 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     df_1 = output[0]
     df_2 = output[1]
 
-    conditions_2 = {"taxo2": ["ctas"]}
+    conditions_2 = {"taxo2":
+                        {"operator": Comparison.IN,
+                         "value": ["ctas"]
+                         }}
     output = split_and_sort(df=df_2, true_first=False, conditions=conditions_2)
     df_2 = output[0]
     df_3 = output[1]

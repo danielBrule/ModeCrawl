@@ -149,11 +149,17 @@ def split_and_sort(df: pd.DataFrame, true_first: bool, conditions: {}) -> [pd.Da
                                axis=1)
 
     df_1 = df.loc[df['split_val'] == True].copy()
-    df_1 = df_1.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    if "taxo4" in df_1.columns:
+        df_1 = df_1.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
+    else:
+        df_1 = df_1.sort_values(by=["taxo1", "taxo2", "taxo3"])
     df_1 = df_1.drop(["split_val"], axis=1)
 
     df_2 = df.loc[df['split_val'] == False].copy()
-    df_2 = df_2.sort_values(by=["taxo1", "taxo2", "taxo3"])
+    if "taxo4" in df_2.columns:
+        df_2 = df_2.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
+    else:
+        df_2 = df_2.sort_values(by=["taxo1", "taxo2", "taxo3"])
     df_2 = df_2.drop(["split_val"], axis=1)
 
     if true_first:

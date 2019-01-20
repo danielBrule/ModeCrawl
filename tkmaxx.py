@@ -10,7 +10,8 @@ URL_MS_HOME = "https://www.marksandspencer.com/sitemap.xml"
 
 
 def get_categories() -> pd.DataFrame:
-    sitemap_xml = simple_get(URL_TKMAXX_HOME_SITEMAP)
+    print("{} get home sitemap".format(Shop.TKMAXX.value))
+    sitemap_xml = simple_get(URL_TKMAXX_HOME_SITEMAP, USER_AGENT)
     sitemap_root_node = ET.fromstring(sitemap_xml)
 
     sitemap_url = []
@@ -18,9 +19,12 @@ def get_categories() -> pd.DataFrame:
         sitemap_url.append(href[0].text)
 
     sitemap_url = [x for x in sitemap_url if "Category-en-GBP" in x]
-    sitemap_product_xml = simple_get(sitemap_url[0])
+
+    print("{} get Category-en-GBP".format(Shop.TKMAXX.value))
+    sitemap_product_xml = simple_get(sitemap_url[0], USER_AGENT)
     sitemap_product_root_node = ET.fromstring(sitemap_product_xml)
 
+    print("{} parse Categories".format(Shop.TKMAXX.value))
     category_url = []
     for href in sitemap_product_root_node:
         category_url.append(href[0].text)
@@ -55,14 +59,14 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         products = []
         i = 0
         while True:
-            raw_html = simple_get(url)
+            raw_html = simple_get(url, USER_AGENT)
             html = BeautifulSoup(raw_html, 'html.parser')
 
             if "The page you were looking for does not exist" in html:
                 return None
 
             data = simple_get(
-                url + "/autoLoad?q=&page={}".format(i))
+                url + "/autoLoad?q=&page={}".format(i), USER_AGENT)
             # url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock&fetchAll=true&page=0")
             data = json.loads(data)
 
@@ -91,12 +95,10 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     return None
 
 
-
-
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     conditions = {"taxo2":
                       {"operator": Comparison.EQUAL,
-                       "value": ["c"]
+                       "value": ["c", "biggest-savings"]
                        },
                   "taxo3":
                       {"operator": Comparison.EQUAL,
@@ -138,5 +140,3 @@ def parse_tkmaxx():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=ex)
         return
-
-

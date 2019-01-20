@@ -131,6 +131,47 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str):
     return None
 
 
+def sort_categories(df: pd.DataFrame) -> pd.DataFrame:
+    conditions_sale = {"taxo1":
+                           {"operator": Comparison.EQUAL,
+                            "value": ["sale", "deals", "new-and-now"]
+                            },
+                       "taxo2":
+                           {"operator": Comparison.EQUAL,
+                            "value": ["sale", "deals", "new-and-now"]
+                            },
+                       "taxo2":
+                           {"operator": Comparison.EQUAL,
+                            "value": ["sale", "deals", "new-and-now"]
+                            },
+                       "taxo2":
+                           {"operator": Comparison.START_WITH,
+                            "value": ["last-", "up-to-"]
+                            },
+                       "taxo3":
+                           {"operator": Comparison.START_WITH,
+                            "value": ["last-", "up-to-"]
+                            }
+                       }
+
+    conditions_new = {"taxo2":
+                           {"operator": Comparison.IN,
+                            "value": ["new-and-now", "special-sizes", "featured-shops", "gapbody",
+                                      "the-schoolwear-shop"]
+                            }
+                      }
+
+    output_1 = split_and_sort(df=df, true_first=False, conditions=conditions_sale)
+    df_1 = output_1[0]
+
+    output_2 = split_and_sort(df=df_1, true_first=False, conditions=conditions_new)
+    df_1_1 = output_2[0]
+    df_1_2 = output_2[1]
+
+    df_2 = output_1[1]
+    return pd.concat([df_1_1, df_1_2, df_2], sort=False)
+
+
 def parse_gap():
     try:
         df_url = get_categories()
@@ -143,42 +184,7 @@ def parse_gap():
         df_url = df_url.drop(["URL_next_line", "is_in_next_row"], axis=1)
 
         # put sales categories at the end
-        df_url["is_sale"] = df_url.apply(lambda my_row:
-                                         True
-                                         if "sale" in my_row["taxo2"].lower() or
-                                            "sale" in my_row["taxo3"].lower() or
-                                            "deals" in my_row["taxo3"].lower() or
-                                            "new-and-now" in my_row["taxo2"].lower() or
-                                            my_row["taxo2"].lower().startswith("last-") or
-                                            my_row["taxo2"].lower().startswith("up-to-") or
-                                            my_row["taxo3"].lower().startswith("last-") or
-                                            my_row["taxo3"].lower().startswith("up-to-")
-                                         else False, axis=1)
-
-        df_url_sale = df_url.loc[df_url['is_sale'] == True].copy()
-        df_url_sale = df_url_sale.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
-        df_url_sale = df_url_sale.drop(["is_sale"], axis=1)
-
-        df_url_no_sale = df_url.loc[df_url['is_sale'] == False].copy()
-        df_url_no_sale["is_subcat"] = df_url_no_sale.apply(lambda my_row:
-                                                           True
-                                                           if "new-and-now" in my_row["taxo2"].lower() or
-                                                              "special-sizes" in my_row["taxo2"].lower() or
-                                                              "featured-shops" in my_row["taxo2"].lower() or
-                                                              "gapbody" in my_row["taxo2"].lower() or
-                                                              "the-schoolwear-shop" in my_row["taxo3"].lower()
-                                                           else False, axis=1)
-
-        df_url_no_sale_sub_cat = df_url_no_sale.loc[df_url_no_sale['is_subcat'] == True].copy()
-        df_url_no_sale_sub_cat = df_url_no_sale_sub_cat.drop(["is_sale", "is_subcat"], axis=1)
-        df_url_no_sale_sub_cat = df_url_no_sale_sub_cat.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
-
-        df_url_no_sale_no_sub_cat = df_url_no_sale.loc[df_url_no_sale['is_subcat'] == False].copy()
-        df_url_no_sale_no_sub_cat = df_url_no_sale_no_sub_cat.drop(["is_sale", "is_subcat"], axis=1)
-        df_url_no_sale_no_sub_cat = df_url_no_sale_no_sub_cat.sort_values(by=["taxo1", "taxo2", "taxo3", "taxo4"])
-
-        df_url = pd.concat([df_url_no_sale_no_sub_cat, df_url_no_sale_sub_cat, df_url_sale], sort=False)
-
+        df_url = sort_categories(df=df_url)
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.GAP, message=ex)
         return
@@ -196,3 +202,4 @@ def parse_gap():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.GAP, df=df)
+
