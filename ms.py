@@ -5,11 +5,10 @@ import xml.etree.ElementTree as ET
 import re
 
 URL_MS_HOME = "https://www.marksandspencer.com"
-URL_MS_HOME2 = "https://www.marksandspencer.com"
 
 
 def get_categories() -> pd.DataFrame:
-    raw_html = simple_get(URL_MS_HOME2)
+    raw_html = simple_get(URL_MS_HOME)
     html = BeautifulSoup(raw_html, 'html.parser')
     output = []
 

@@ -78,6 +78,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
 
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
+    df["taxo3"] = df["taxo3"].apply(str)
+
     conditions_1 = {"taxo2":
                         {"operator": Comparison.IN,
                          "value": ["accessories", "coats-jackets", "dresses", "hoodies-sweatshirts", "jackets-coats",
@@ -94,15 +96,34 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
 
     conditions_2 = {"taxo2":
                         {"operator": Comparison.IN,
+                         "value": ["ctas", "living-gifts", "outlet"]
+                         },
+                    "taxo3":
+                        {"operator": Comparison.IN,
                          "value": ["ctas"]
-                         }}
+                         }
+                    }
     output = split_and_sort(df=df_2, true_first=False, conditions=conditions_2)
     df_2 = output[0]
     df_3 = output[1]
+    conditions_3 = {"taxo2":
+                        {"operator": Comparison.IN,
+                         "value": ["ctas"]
+                         },
+                    "taxo3":
+                        {"operator": Comparison.IN,
+                         "value": ["ctas"]
+                         }
+                    }
+    output = split_and_sort(df=df_3, true_first=False, conditions=conditions_3)
+    df_3 = output[0]
+    df_4 = output[1]
 
-    df = pd.concat([df_1, df_2, df_3], sort=False)
+    df = pd.concat([df_1, df_2, df_3, df_4], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
+
+
 
 
 def parse_asos():
@@ -134,3 +155,10 @@ def parse_asos():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
         return
+
+
+
+now = datetime.datetime.now()
+df = pd.read_csv("tmp/ASOS_2019-1-21.csv")
+df = sort_and_save(df)
+save_output_after(shop=Shop.ASOS, df=df, now=now)
