@@ -6,6 +6,7 @@ import re
 
 URL_MS_HOME = "https://www.marksandspencer.com"
 
+# TODO improve get sub categorues
 
 def get_categories() -> pd.DataFrame:
     raw_html = simple_get(URL_MS_HOME)

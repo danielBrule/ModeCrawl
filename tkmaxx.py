@@ -33,6 +33,7 @@ def get_categories() -> pd.DataFrame:
     for url in category_url:
         taxonomy = url.replace('https://www.tkmaxx.com/uk/en/', '')
         taxonomy = taxonomy.split("/")
+        taxonomy.remove("c")
         output.append({"taxo1": taxonomy[0],
                        "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
                        "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),

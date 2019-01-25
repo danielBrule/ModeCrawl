@@ -30,7 +30,7 @@ def get_categories() -> []:
             element_1 = element_1.replace('https://www2.hm.com/en_gb/', '')
             element_1 = element_1.split("/")
             output.append({"taxo1": element_1[0],
-                           "taxo2": element_1[2],
+                           "taxo2": (element_1[2] if len(element_1) > 2 else None),
                            "taxo3": (element_1[3] if len(element_1) > 3 else None),
                            "URL": href_list[i]})
 
@@ -61,6 +61,7 @@ def get_inventory(taxo1: str, url: str):
                 taxo = [x.strip() for x in taxo]
                 tmp_taxo2 = taxo[1] if len(taxo) >= 2 else None
                 tmp_taxo3 = taxo[2] if len(taxo) >= 3 else None
+                tmp_taxo4 = taxo[3] if len(taxo) >= 4 else None
                 if (isinstance(tmp_taxo2, str) and tmp_taxo2 in ["BASICS_BASICS"]) or \
                         (isinstance(tmp_taxo3, str) and
                          tmp_taxo3 in [" BASICS_VIEW_ALL", "BEST BASICS_VIEW_ALL", "BESTBASICS"]):
@@ -74,6 +75,7 @@ def get_inventory(taxo1: str, url: str):
                                                   taxo1=taxo1,
                                                   taxo2=tmp_taxo2,
                                                   taxo3=tmp_taxo3,
+                                                  taxo4=tmp_taxo4,
                                                   url="https://www2.hm.com/" + node["swatches"][0]["articleLink"]))
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=ex)

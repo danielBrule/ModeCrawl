@@ -8,7 +8,7 @@ URL_GAP_HOME = "https://www.gap.co.uk/sitemap_2-category.xml"
 BASE_URL = "https://www.gap.co.uk/on/demandware.store/Sites-ShopUK-Site/en_GB/Product-LazyLoadBatchTiles?pids=%5B%"
 BASE_URL_END = "5D&cgid=1110339&ulid=1110339"
 
-
+# todo get sub categories
 def get_categories() -> pd.DataFrame:
     sitemap_product_url = []
     sitemap_category_xml = simple_get(URL_GAP_HOME)
