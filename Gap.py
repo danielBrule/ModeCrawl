@@ -3,15 +3,18 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import json
 from bs4 import BeautifulSoup
+import re
 
-URL_GAP_HOME = "https://www.gap.co.uk/sitemap_2-category.xml"
+URL_GAP_HOME = "https://www.gap.co.uk/"
+URL_GAP_HOME_CATEGORY = "https://www.gap.co.uk/sitemap_2-category.xml"
 BASE_URL = "https://www.gap.co.uk/on/demandware.store/Sites-ShopUK-Site/en_GB/Product-LazyLoadBatchTiles?pids=%5B%"
 BASE_URL_END = "5D&cgid=1110339&ulid=1110339"
+
 
 # todo get sub categories
 def get_categories() -> pd.DataFrame:
     sitemap_product_url = []
-    sitemap_category_xml = simple_get(URL_GAP_HOME)
+    sitemap_category_xml = simple_get(URL_GAP_HOME_CATEGORY)
     sitemap_category_root_node = ET.fromstring(sitemap_category_xml)
     for category in sitemap_category_root_node:
         sitemap_product_url.append(category[0].text)
@@ -88,10 +91,24 @@ class GapListProductsAlreadyParsedSingleton:
         return output
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str):
-    print("url {}: {}".format(Shop.GAP.value, url))
+def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFrame:
     try:
+        print('suburl: {}'.format(url))
+        taxonomy = taxonomy.copy()
+        taxonomy.append(last_level)
         products = []
+
+
+        if 'parentCategory' in url:
+            url = url[:url.rfind("/")+1]
+
+
+        raw_html = simple_get(url)
+        html = BeautifulSoup(raw_html, 'html.parser')
+
+        nb_item = re.findall('([0-9]+) item', str(html), re.IGNORECASE)[0]
+
+        url = url + "/?sz={}&start=0&format=page-element".format(nb_item)
         raw_html = simple_get(url)
         html = BeautifulSoup(raw_html, 'html.parser')
 
@@ -114,18 +131,54 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str):
             if i % 40 == 0:
                 url = url[:-3] + BASE_URL_END
                 try:
-                    output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, taxo4=taxo4, output=output, url=url)
+                    output = parse_json(taxo1=taxonomy[0] if len(taxonomy) >= 1 else None,
+                                        taxo2=taxonomy[1] if len(taxonomy) >= 2 else None,
+                                        taxo3=taxonomy[2] if len(taxonomy) >= 3 else None,
+                                        taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
+                                        output=output,
+                                        url=url)
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
 
         if i % 40 != 0:
             url = url[:-3] + BASE_URL_END
             try:
-                output = parse_json(taxo1=taxo1, taxo2=taxo2, taxo3=taxo3, taxo4=taxo4, output=output, url=url)
+                output = parse_json(taxo1=taxonomy[0] if len(taxonomy) >= 1 else None,
+                                    taxo2=taxonomy[1] if len(taxonomy) >= 2 else None,
+                                    taxo3=taxonomy[2] if len(taxonomy) >= 3 else None,
+                                    taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
+                                    output=output,
+                                    url=url)
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
 
         return pd.DataFrame(output)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
+
+
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> pd.DataFrame:
+    try:
+        print("url {}: {}".format(Shop.GAP.value, url))
+
+        output = []
+
+        taxonomy = [taxo1, taxo2, taxo3, taxo4]
+        taxonomy = [x for x in taxonomy if x is not None]
+
+        raw_html = simple_get(url)
+        html = BeautifulSoup(raw_html, 'html.parser')
+
+        category_node = html.findAll(name="a", attrs={"class": "category-name"})
+        for position in range (len(category_node) - 1, -1, -1):
+            xml_node = ET.fromstring(str(category_node[position]))
+            if "href" in xml_node.attrib:
+                output.append(get_page_inventory(taxonomy=taxonomy,
+                                                 last_level=xml_node.text.strip(),
+                                                 url=URL_GAP_HOME + xml_node.attrib["href"]))
+
+
+        return pd.concat(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
     return None
@@ -155,10 +208,10 @@ def sort_categories(df: pd.DataFrame) -> pd.DataFrame:
                        }
 
     conditions_new = {"taxo2":
-                           {"operator": Comparison.IN,
-                            "value": ["new-and-now", "special-sizes", "featured-shops", "gapbody",
-                                      "the-schoolwear-shop"]
-                            }
+                          {"operator": Comparison.IN,
+                           "value": ["new-and-now", "special-sizes", "featured-shops", "gapbody",
+                                     "the-schoolwear-shop"]
+                           }
                       }
 
     output_1 = split_and_sort(df=df, true_first=False, conditions=conditions_sale)
@@ -202,4 +255,3 @@ def parse_gap():
 
     df = pd.concat(df_list)
     save_output(shop=Shop.GAP, df=df)
-
