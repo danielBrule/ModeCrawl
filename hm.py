@@ -90,10 +90,15 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     conditions = {"taxo2":
                       {"operator": Comparison.IN,
                        "value": ["extended size", "extendedsize", "plus sizes", "maternity wear_maternity wear",
-                                 "nightwear_nightwear"]}}
-    conditions_2 = {"taxo2":
+                                 "nightwear_nightwear", "EXTENDEDSIZES_EXTENDEDSIZES"]},
+                  "taxo3":
                       {"operator": Comparison.IN,
-                       "value": ["bottom", "TOPS_VIEW_ALL"]}}
+                       "value": ["VIEWALL_VIEW_ALL"]}
+                  }
+
+    conditions_2 = {"taxo2":
+                        {"operator": Comparison.IN,
+                         "value": ["bottom", "TOPS_VIEW_ALL"]}}
 
     output_1 = split_and_sort(df=df, true_first=False, conditions=conditions)
 
@@ -105,10 +110,6 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     df_1_2 = output_2[1]
 
     return pd.concat([df_1_1, df_1_2, df_2], sort=False)
-
-
-    df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
-    return df
 
 
 def parse_hm():

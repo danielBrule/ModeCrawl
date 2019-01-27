@@ -190,16 +190,8 @@ def sort_categories(df: pd.DataFrame) -> pd.DataFrame:
                             "value": ["sale", "deals", "new-and-now"]
                             },
                        "taxo2":
-                           {"operator": Comparison.EQUAL,
-                            "value": ["sale", "deals", "new-and-now"]
-                            },
-                       "taxo2":
-                           {"operator": Comparison.EQUAL,
-                            "value": ["sale", "deals", "new-and-now"]
-                            },
-                       "taxo2":
                            {"operator": Comparison.START_WITH,
-                            "value": ["last-", "up-to-"]
+                            "value": ["last-", "up-to-","sale", "deals", "new-and-now"]
                             },
                        "taxo3":
                            {"operator": Comparison.START_WITH,

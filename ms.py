@@ -6,6 +6,7 @@ import re
 
 URL_MS_HOME = "https://www.marksandspencer.com"
 
+
 # TODO improve get sub categorues
 
 def get_categories() -> pd.DataFrame:
@@ -34,11 +35,14 @@ def get_categories() -> pd.DataFrame:
     return output_df
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
-    print("url: {}".format(url))
-    i = 1
-    products = []
+def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFrame:
     try:
+        print('suburl: {}'.format(url))
+        taxonomy = taxonomy.copy()
+        taxonomy.append(last_level)
+
+        i = 1
+        products = []
         while True:
             url_prod = url + "?pageChoice={}".format(i)
             raw_html = simple_get(url_prod)
@@ -50,7 +54,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             nb_pages = int(re.search('[0-9]+ of ([0-9]+)', nb_pages, re.IGNORECASE).group(1))
 
             # get highlighted products
-            spotlight_node = html.findAll(name="a", attrs={"class": "spotlight__link"})
+            spotlight_node = html.findAll(name="a", attrs={"class": "product"})
             for node in spotlight_node:
                 try:
                     data = ET.fromstring(str(node))
@@ -59,62 +63,91 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
                     url_product = "https://www.marksandspencer.com" + data.attrib["href"]
                     product_id = re.search('/p/([a-zA-Z0-9]+)?', url_product, re.IGNORECASE).group(1)
-                    for subnode in data.findall('./*/*/'):
-                        if subnode.attrib["class"] == "spotlight__title":
-                            name = subnode.text
-                        if subnode.attrib["class"] == "spotlight__normalPrice":
-                            price = re.search('.([0-9.]+)', subnode.text, re.IGNORECASE).group(1)
-                    products.append({"shop": Shop.MS,
-                                     "id": product_id,
-                                     "reference": None,
-                                     "name": name,
-                                     "price": price,
-                                     "inStock": True,
-                                     "taxo1": taxo1,
-                                     "taxo2": taxo2,
-                                     "taxo3": taxo3,
-                                     "url": url_product,
-                                     "date": datetime.datetime.now()})
-                except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR,
-                              shop=Shop.MS, message="Error spotlight page {} : {} ({})".format(i, node, ex))
-
-            # get products
-            products_node = html.findAll(name="a", attrs={"class": "product__link"})
-            for node in products_node:
-                try:
-                    data = ET.fromstring(str(node))
-                    name = ""
-                    price = ""
-
-                    url_product = "https://www.marksandspencer.com" + data.attrib["href"]
-                    product_id = re.search('/p/([a-zA-Z0-9]+)?', url_product, re.IGNORECASE).group(1)
-                    for subnode in data.findall("./div[@class='product__details']/"):
+                    for subnode in data.findall('./*/'):
                         if subnode.attrib["class"] == "product__title":
-                            name = subnode.text
-                        if subnode.attrib["class"] == "product__price":
-                            if len(subnode) == 0:
-                                price = re.search('.([0-9.]+)', subnode.text, re.IGNORECASE).group(1)
-                            else:
-                                price = re.search('.([0-9.]+)', subnode[0].text, re.IGNORECASE).group(1)
+                            name = subnode.text.strip()
+                        if subnode.attrib["class"] == 'product__price':
+                            price = re.search('.([0-9.]+\.?[0-9]*)', subnode[0][0].tail, re.IGNORECASE).group(1)
                     products.append(add_in_dictionary(shop=Shop.MS,
                                                       obj_id=product_id,
                                                       reference=None,
                                                       name=name,
                                                       price=price,
                                                       in_stock=True,
-                                                      taxo1=taxo1,
-                                                      taxo2=taxo2,
-                                                      taxo3=taxo3,
+                                                      taxo1=taxonomy[0] if len(taxonomy) >= 1 else None,
+                                                      taxo2=taxonomy[1] if len(taxonomy) >= 2 else None,
+                                                      taxo3=taxonomy[2] if len(taxonomy) >= 3 else None,
+                                                      taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
                                                       url=url_product))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR,
-                              shop=Shop.MS, message="Error node page {} : {} ({})".format(i, node, ex))
+                              shop=Shop.MS, message="Error spotlight page {} : {} ({})".format(i, node, ex))
 
             i += 1
             if i > nb_pages:
                 break
         return pd.DataFrame(products)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message=ex)
+    return None
+
+
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
+    try:
+        print("url: {}".format(url))
+        output = []
+
+        taxonomy = [taxo1, taxo2, taxo3]
+        taxonomy = [x for x in taxonomy if x is not None]
+        raw_html = simple_get(url)
+        html = BeautifulSoup(raw_html, 'html.parser')
+        filters = html.findAll(name="li", attrs={"class": "accordion__item"})
+
+        try:
+            for filter in filters:
+                data = ET.fromstring(str(filter))
+                if data[1][0].text.strip() == 'Product Type':
+                    for subnode in data[2][0]:
+                        name = re.search('(.*).\(.*\)', subnode[1][0].text.strip(), re.IGNORECASE).group(1)
+                        output.append(get_page_inventory(taxonomy=taxonomy,
+                                                         last_level=name,
+                                                         url=URL_MS_HOME + subnode[1][0].attrib["href"]))
+        except Exception as ex:
+            log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=ex)
+
+        if len(output) == 0:
+            try:
+                for filter in filters:
+                    data = ET.fromstring(str(filter))
+                    if data[1][0].text.strip() == 'Categories' or \
+                            data[1][0].text.strip() == 'Category':
+                        for subnode in data[2][0]:
+                            name = re.search('(.*).\(.*\)', subnode[1][0].text.strip(), re.IGNORECASE).group(1)
+                            output.append(get_page_inventory(taxonomy=taxonomy,
+                                                             last_level=name,
+                                                             url=URL_MS_HOME + subnode[1][0].attrib["href"]))
+            except Exception as ex:
+                log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=ex)
+
+        if len(output) == 0:
+            try:
+                for filter in filters:
+                    data = ET.fromstring(str(filter))
+                    if data[1][0].text.strip() == 'Style':
+                        for subnode in data[2][0]:
+                            name = re.search('(.*).\(.*\)', subnode[1][0].text.strip(), re.IGNORECASE).group(1)
+                            output.append(get_page_inventory(taxonomy=taxonomy,
+                                                             last_level=name,
+                                                             url=URL_MS_HOME + subnode[1][0].attrib["href"]))
+            except Exception as ex:
+                log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=ex)
+
+        if len(output) == 0:
+            output.append(get_page_inventory(taxonomy=taxonomy,
+                                             last_level=None,
+                                             url=url))
+
+        return pd.concat(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message=ex)
     return None
