@@ -9,7 +9,6 @@ URL_NEWLOOK_MENU_PAGE_WOMEN = "https://www.newlook.com/uk/json/meganav/tier-one/
 URL_NEWLOOK_MENU_PAGE_KIDS = "https://www.newlook.com/uk/json/meganav/tier-one/uk-teens"
 
 
-# TODO improvement: check for sub categories check for value relevance:markDownIndicator:false:category:uk in
 # the webpage then call the same script with additional value
 def my_find(node_value: str, dictionary: {}) -> []:
     output = []

@@ -11,7 +11,6 @@ BASE_URL = "https://www.gap.co.uk/on/demandware.store/Sites-ShopUK-Site/en_GB/Pr
 BASE_URL_END = "5D&cgid=1110339&ulid=1110339"
 
 
-# todo get sub categories
 def get_categories() -> pd.DataFrame:
     sitemap_product_url = []
     sitemap_category_xml = simple_get(URL_GAP_HOME_CATEGORY)
@@ -85,7 +84,6 @@ class GapListProductsAlreadyParsedSingleton:
     product_list = []
 
     def get_product_list(self, new_products: []) -> []:
-        print(len(self.product_list))
         output = set(new_products) - set(self.product_list)
         self.product_list = self.product_list + list(output)
         return output

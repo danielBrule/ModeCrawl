@@ -12,6 +12,13 @@ from Parser.Primark import parse_primark
 from Parser.Zara import parse_zara
 from Parser.tkmaxx import parse_tkmaxx
 from Parser.Gap import parse_gap
+from Parser.JohnLewis import parse_john_lewis
+
+try:
+    print("Parse {}".format(Shop.JOHNLEWIS.value))
+    parse_john_lewis()
+except Exception as ex:
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.JOHNLEWIS, message=ex)
 
 try:
     print("Parse {}".format(Shop.ASOS.value))

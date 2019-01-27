@@ -4,15 +4,12 @@ from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 import re
 
-URL_MS_HOME = "https://www.marksandspencer.com"
+URL_MS_HOME = "https://www.marksandspencer.com/"
 
-
-# TODO improve get sub categorues
 
 def get_categories() -> pd.DataFrame:
     raw_html = simple_get(URL_MS_HOME)
     html = BeautifulSoup(raw_html, 'html.parser')
-    output = []
 
     results = html.find_all(name="a")
     output = []
@@ -61,7 +58,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                     name = ""
                     price = ""
 
-                    url_product = "https://www.marksandspencer.com" + data.attrib["href"]
+                    url_product = URL_MS_HOME + data.attrib["href"]
                     product_id = re.search('/p/([a-zA-Z0-9]+)?', url_product, re.IGNORECASE).group(1)
                     for subnode in data.findall('./*/'):
                         if subnode.attrib["class"] == "product__title":

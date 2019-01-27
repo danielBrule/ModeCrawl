@@ -27,6 +27,7 @@ class Shop(Enum):
     TKMAXX = "TKMAXX"
     ZARA = "ZARA"
     GAP = "GAP"
+    JOHNLEWIS = "JOHN_LEWIS"
 
 
 class Comparison(Enum):

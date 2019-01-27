@@ -51,6 +51,7 @@ def get_categories() -> pd.DataFrame:
     return output
 
 
+
 def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFrame:
     try:
         print(last_level)
