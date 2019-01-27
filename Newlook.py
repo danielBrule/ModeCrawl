@@ -172,7 +172,8 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
                       {"operator": Comparison.EQUAL,
                        "value":
                            ["category:uk-mens", "category:uk-womens", "category:uk-teens", "nan",
-                            "category:uk-mens-clothing", "category:uk-mens-footwear"]
+                            "category:uk-mens-clothing", "category:uk-mens-footwear", 'category:uk-teens-clothing',
+                            "category:uk-womens-clothing"]
                        }
                   }
 

@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 
 URL_TKMAXX_HOME_SITEMAP = "https://www.tkmaxx.com/uk/en/sitemap.xml"
 URL_TKMAXX_HOME = "https://www.tkmaxx.com/uk/en/"
-URL_MS_HOME = "https://www.marksandspencer.com/sitemap.xml"
 
 
 def get_categories() -> pd.DataFrame:
@@ -33,7 +32,7 @@ def get_categories() -> pd.DataFrame:
     for url in category_url:
         taxonomy = url.replace('https://www.tkmaxx.com/uk/en/', '')
         taxonomy = taxonomy.split("/")
-        taxonomy.remove("c")
+        taxonomy = taxonomy[:-2]
         output.append({"taxo1": taxonomy[0],
                        "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
                        "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),
@@ -52,11 +51,11 @@ def get_categories() -> pd.DataFrame:
     return output
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
-    url = "https://www.tkmaxx.com/" + url
-    print("url: {}".format(url))
-
+def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFrame:
     try:
+        print(last_level)
+        taxonomy = taxonomy.copy()
+        taxonomy.append(last_level)
         products = []
         i = 0
         while True:
@@ -66,9 +65,11 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
             if "The page you were looking for does not exist" in html:
                 return None
 
+            last_level = last_level.replace(" ", "%20")
             data = simple_get(
-                url + "/autoLoad?q=&page={}".format(i), USER_AGENT)
-            # url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock&fetchAll=true&page=0")
+                url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock%3Astyle%3A{}&fetchAll=true&page={}".format(
+                    last_level, i), USER_AGENT)
+
             data = json.loads(data)
 
             number_of_pages = data['pagination']['numberOfPages']
@@ -81,35 +82,74 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                       price=node['price']['value'],
                                                       in_stock=True if node['stockLevelStatus'] == "inStock"
                                                       else False,
-                                                      taxo1=taxo1,
-                                                      taxo2=taxo2,
-                                                      taxo3=taxo3,
+                                                      taxo1=taxonomy[0] if len(taxonomy) >= 1 else None,
+                                                      taxo2=taxonomy[1] if len(taxonomy) >= 2 else None,
+                                                      taxo3=taxonomy[2] if len(taxonomy) >= 3 else None,
+                                                      taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
                                                       url="https://www.tkmaxx.com/uk/" + node['url']))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.TKMAXX, message=ex)
             i += 1
             if i >= number_of_pages:
                 break
-        return pd.DataFrame(products)
+        df = pd.DataFrame(products)
+        print("{} - {}".format(last_level, len(df)))
+        return df
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=ex)
     return None
 
 
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> pd.DataFrame:
+    try:
+        url = "https://www.tkmaxx.com/" + url
+        print("url: {}".format(url))
+
+        output = []
+
+        taxonomy = [taxo1, taxo2, taxo3, taxo4]
+        taxonomy = [x for x in taxonomy if x is not None]
+
+        style_data = simple_get(url + "/autoLoad?q=&page=0", USER_AGENT)
+
+        data = json.loads(style_data)
+
+        for node in data['facets']:
+            if node["code"] == 'style':
+                for style_node in node["values"]:
+                    output.append(get_page_inventory(taxonomy=taxonomy,
+                                                     last_level=style_node["code"],
+                                                     url=url))
+
+        return pd.concat(output)
+    except Exception as ex:
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
+    return None
+
+
+
+
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
-    conditions = {"taxo2":
-                      {"operator": Comparison.EQUAL,
-                       "value": ["c", "biggest-savings"]
-                       },
-                  "taxo3":
-                      {"operator": Comparison.EQUAL,
-                       "value": ["c"]
-                       }
-                  }
+    conditions_1 = {"taxo3":
+                        {"operator": Comparison.IS_NUMBER,
+                         "value": []
+                         }
+                    }
+    conditions_2 = {"taxo2":
+                        {"operator": Comparison.EQUAL,
+                         "value": ["c", "biggest-savings", "clothing", "big-brand-delivery",
+                                   "last-chance"]
+                         },
+                    "taxo3":
+                        {"operator": Comparison.EQUAL,
+                         "value": ["c", "clothing", "new-in-boys"]
+                         }
+                    }
 
-    output = split_and_sort(df=df, true_first=False, conditions=conditions)
+    output = split_and_sort(df=df, true_first=False, conditions=conditions_1)
+    output2 = split_and_sort(df=output[0], true_first=False, conditions=conditions_2)
 
-    df = pd.concat([output[0], output[1]], sort=False)
+    df = pd.concat([output2[0], output2[1], output[1]], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
 

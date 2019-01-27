@@ -33,6 +33,7 @@ class Comparison(Enum):
     IN = "IN"
     START_WITH = "START_WITH"
     EQUAL = "EQUAL"
+    IS_NUMBER = "IS_NUMBER"
 
 
 DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
@@ -124,19 +125,22 @@ def add_in_dictionary(shop: Shop, obj_id: str, reference: str, name: str, price,
 def is_condition_true(input_value: [], conditions: {}):
     for taxo_level, value in conditions.items():
 
+        if value["operator"] == Comparison.IS_NUMBER:
+            return str(input_value[taxo_level]).isdigit()
+
         if value["operator"] == Comparison.EQUAL:
             for comp_value in value["value"]:
-                if comp_value.lower() == input_value[taxo_level].lower():
+                if comp_value.lower() == str(input_value[taxo_level]).lower():
                     return True
 
         elif value["operator"] == Comparison.IN:
             for comp_value in value["value"]:
-                if comp_value.lower() in input_value[taxo_level].lower():
+                if comp_value.lower() in str(input_value[taxo_level]).lower():
                     return True
 
         elif value["operator"] == Comparison.START_WITH:
             for comp_value in value["value"]:
-                if input_value[taxo_level].lower().startswith(comp_value.lower()):
+                if str(input_value[taxo_level]).lower().startswith(comp_value.lower()):
                     return True
         else:
             raise Exception("invalid comparison operator: {}".format(value["operator"]))
