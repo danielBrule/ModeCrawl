@@ -158,7 +158,3 @@ def parse_asos():
 
 
 
-now = datetime.datetime.now()
-df = pd.read_csv("tmp/ASOS_2019-1-21.csv")
-df = sort_and_save(df)
-save_output_after(shop=Shop.ASOS, df=df, now=now)
