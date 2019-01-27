@@ -123,7 +123,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> p
 
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=ex)
     return None
 
 
