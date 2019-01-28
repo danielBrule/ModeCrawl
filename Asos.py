@@ -57,14 +57,21 @@ def get_page_inventory(taxonomy: [str], last_level: str, cid: str, subcid: str) 
     try:
         print('suburl: {} '.format(last_level))
         taxonomy = taxonomy.copy()
-        taxonomy.append(last_level)
+        if last_level is not None:
+            taxonomy.append(last_level)
         products = []
         while True:
             offset = len(products)
-            json_url = \
-                "https://api.asos.com/product/search/v1/categories/{}?channel=mobile-web&country=GB" \
-                "&currency=GBP&keyStoreDataversion=fcnu4gt-12&lang=en&limit=5000&offset={}&" \
-                "rowlength=2&store=1&refine=attribute_1047:{}".format(cid, offset, subcid)
+            if subcid is None:
+                json_url = \
+                    "https://api.asos.com/product/search/v1/categories/{}?channel=mobile-web&country=GB" \
+                    "&currency=GBP&keyStoreDataversion=fcnu4gt-12&lang=en&limit=5000&offset={}&" \
+                    "rowlength=2&store=1".format(cid, offset)
+            else:
+                json_url = \
+                    "https://api.asos.com/product/search/v1/categories/{}?channel=mobile-web&country=GB" \
+                    "&currency=GBP&keyStoreDataversion=fcnu4gt-12&lang=en&limit=5000&offset={}&" \
+                    "rowlength=2&store=1&refine=attribute_1047:{}".format(cid, offset, subcid)
             data = simple_get(json_url, USER_AGENT)
             data = json.loads(data)
             nb_items = data["itemCount"]
@@ -123,6 +130,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str) -> pd.DataFrame:
                         get_page_inventory(taxonomy=taxonomy, last_level=last_level, cid=cid, subcid=sub_cid))
             except Exception as ex:
                 log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=str(ex))
+        if len(output) == 0:
+            return get_page_inventory(taxonomy=taxonomy, last_level=None, cid=cid, subcid=None)
         return pd.concat(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=str(ex))
@@ -203,5 +212,3 @@ def parse_asos():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
         return
-
-parse_asos()
