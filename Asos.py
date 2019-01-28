@@ -42,14 +42,13 @@ def get_categories() -> pd.DataFrame:
                     url.text == "New in: Shoes & Accessories" or \
                     url.text == "Trending now":
                 continue
-            url = url.attrib["href"].split("&")[0]
-            taxo = url.attrib["href"]
-            taxo = taxo.replace('https://www.asos.com/', '')
+            url_short = url.attrib["href"].split("&")[0]
+            taxo = url_short.replace('https://www.asos.com/', '')
             taxo = taxo.split("/")
-            output.append({"taxo1": "Women" if "/women/" in url.attrib["href"].lower() else "Men",
+            output.append({"taxo1": taxo[0],
                            "taxo2": taxo[1],
                            "taxo3": url.text,
-                           "URL": url.attrib["href"]})
+                           "URL": url_short})
     output = pd.DataFrame(output)
     return output
 
@@ -111,19 +110,22 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str) -> pd.DataFrame:
         html = BeautifulSoup(raw_html, 'html.parser')
         category_iter = html.find_all(name="div", attrs={"class": "bybwbES"})
         for category in category_iter:
-            root_node = ET.fromstring(str(category))
-            filter_name = root_node.findall(".//div[@class='_3lFxFJi']")
-            if len(filter_name) == 0 or "Product Type" != filter_name[0].text:
-                continue
-            filters_iter = root_node.findall(".//div[@class='_2h_c2tR']")
-            for filter_elem in filters_iter:
-                sub_cid = filter_elem[0].attrib["value"]
-                last_level = filter_elem[1].text.strip()
-                output.append(
-                    get_page_inventory(taxonomy=taxonomy, last_level=last_level, cid=cid, subcid=sub_cid))
+            try:
+                root_node = ET.fromstring(str(category))
+                filter_name = root_node.findall(".//div[@class='_3lFxFJi']")
+                if len(filter_name) == 0 or "Product Type" != filter_name[0].text:
+                    continue
+                filters_iter = root_node.findall(".//div[@class='_2h_c2tR']")
+                for filter_elem in filters_iter:
+                    sub_cid = filter_elem[0].attrib["value"]
+                    last_level = filter_elem[1].text.strip()
+                    output.append(
+                        get_page_inventory(taxonomy=taxonomy, last_level=last_level, cid=cid, subcid=sub_cid))
+            except Exception as ex:
+                log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=str(ex))
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=str(ex))
     return None
 
 
@@ -177,9 +179,7 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
 def parse_asos():
     # get url to analyse
     try:
-        df_url_men = get_categories(URL_ASOS_HOME_MEN)
-        df_url_women = get_categories(URL_ASOS_HOME_WOMEN)
-        df_url = pd.concat([df_url_men, df_url_women])
+        df_url = get_categories()
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ASOS, message=ex)
         return
@@ -203,3 +203,5 @@ def parse_asos():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
         return
+
+parse_asos()
