@@ -73,10 +73,10 @@ def get_subcategories(category_id: str) -> pd.DataFrame:
     filters_raw = simple_get("https://www.zara.com/uk/en/category/{}/filters?ajax=true".format(category_id), USER_AGENT)
     filters = json.loads(filters_raw)
     output = []
-    for filter in filters["filters"]:
-        if filter["id"] != "features":
+    for product_filter in filters["filters"]:
+        if product_filter["id"] != "features":
             continue
-        for category in filter["value"]:
+        for category in product_filter["value"]:
             category_name = category["value"]
             for product in category["catentries"]:
                 output.append({"category": category_name,
@@ -109,10 +109,10 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                 try:
                     taxonomy_copy = taxonomy.copy()
                     try:
-                        id = node["id"]
-                        if df_subcategories[df_subcategories.productID.isin([id])].empty:
-                            id = node["marketingMetaInfo"]["mappingInfo"][0]["regions"][0]["link"]["id"]
-                        taxonomy_copy.append(df_subcategories.loc[df_subcategories.productID == id, "category"].iloc[0])
+                        product_id = node["id"]
+                        if df_subcategories[df_subcategories.productID.isin([product_id])].empty:
+                            product_id = node["marketingMetaInfo"]["mappingInfo"][0]["regions"][0]["link"]["id"]
+                        taxonomy_copy.append(df_subcategories.loc[df_subcategories.productID == product_id, "category"].iloc[0])
                     except:
                         pass
                     if "price" in node:
@@ -140,10 +140,10 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                           taxo4=taxonomy_copy[3] if len(taxonomy_copy) >= 4 else None,
                                                           url=""))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.ZARA, message=ex)
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.ZARA, message=str(ex), url=url)
         return pd.DataFrame(products)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ZARA, message=str(ex), url=url)
     return None
 
 
@@ -173,7 +173,7 @@ def parse_zara():
     try:
         df_url = get_categories()
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ZARA, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ZARA, message=str(ex))
         return
 
     try:
@@ -184,7 +184,7 @@ def parse_zara():
                    for index, row in df_url.iterrows()]
 
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ZARA, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ZARA, message=str(ex))
         return
     df = pd.concat(df_list)
 
@@ -194,7 +194,7 @@ def parse_zara():
         df = sort_and_save(df)
         save_output_after(shop=Shop.ZARA, df=df, now=now)
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ZARA, message=ex)
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ZARA, message=str(ex))
         return
 
 

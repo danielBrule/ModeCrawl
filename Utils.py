@@ -37,10 +37,10 @@ class Comparison(Enum):
     IS_NUMBER = "IS_NUMBER"
 
 
-DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
-DIRECTORY_OUTPUT_BEFORE_CLEAN = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp/before_clean"
-DIRECTORY_ERROR = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp"
-DIRECTORY_AGGREGATE_FILES = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Parser/tmp/aggregated_files"
+DIRECTORY_OUTPUT = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Data"
+DIRECTORY_OUTPUT_BEFORE_CLEAN = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Data/before_clean"
+DIRECTORY_ERROR = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Data/ERRORS"
+DIRECTORY_AGGREGATE_FILES = "C:/Users/dbrule/PycharmProjects/ClothsRetail/Data/aggregated_files"
 
 USER_AGENT = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -66,22 +66,34 @@ def simple_get(url: str, header: str = None):
         return None
 
 
-def log_error(level: ErrorLevel, shop: Shop, message: str):
+def log_error(level: ErrorLevel, shop: Shop, message: str, url: str=None):
     # if ErrorLevel != ErrorLevel.MINOR:
-    print("{} - {} - {}".format(datetime.datetime.now(), level.name, shop.name))
+    if url is None:
+        print("{} - {} - {}".format(datetime.datetime.now(), level.name, shop.name))
+    else:
+        print("{} - {} - {} - {}".format(datetime.datetime.now(), level.name, shop.name, url))
 
     file = open(os.path.join(DIRECTORY_ERROR, "errors.txt"), "a")
-    file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name))
+    if url is None:
+        file.write("{} - {} - {} \n".format(datetime.datetime.now(), level.name, shop.name))
+    else:
+        file.write("{} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, shop.name, url))
     file.close()
 
     file = open(os.path.join(DIRECTORY_ERROR, shop.name + "_errors.txt"), "a")
-    file.write("{} - {}\n".format(datetime.datetime.now(), level.name))
+    if url is None:
+        file.write("{} - {}\n".format(datetime.datetime.now(), level.name))
+    else:
+        file.write("{} - {} ({})\n".format(datetime.datetime.now(), level.name, url))
     file.write("{}\n".format(message))
     file.close()
 
     if ErrorLevel != ErrorLevel.MAJOR:
         file = open(os.path.join(DIRECTORY_ERROR, "_MAJOR_errors.txt"), "a")
-        file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name))
+        if url is None:
+            file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name, url))
+        else:
+            file.write("{} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, shop.name, url))
         file.close()
 
 

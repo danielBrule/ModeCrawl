@@ -91,14 +91,14 @@ def get_page_inventory(taxonomy: [str], last_level: str, cid: str, subcid: str) 
                                                       taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
                                                       url="https://www.asos.com/" + node["url"]))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=ex)
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=str(ex), url=subcid)
             if len(products) >= nb_items:
                 break
         df = pd.DataFrame(products)
         print('suburl: {} - {}'.format(last_level, len(df)))
         return df
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=str(ex), url=subcid)
     return None
 
 
@@ -129,12 +129,12 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str) -> pd.DataFrame:
                     output.append(
                         get_page_inventory(taxonomy=taxonomy, last_level=last_level, cid=cid, subcid=sub_cid))
             except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=str(ex))
+                log_error(level=ErrorLevel.MINOR, shop=Shop.ASOS, message=str(ex), url=url)
         if len(output) == 0:
             return get_page_inventory(taxonomy=taxonomy, last_level=None, cid=cid, subcid=None)
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=str(ex))
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.ASOS, message=str(ex), url=url)
     return None
 
 
@@ -190,7 +190,7 @@ def parse_asos():
     try:
         df_url = get_categories()
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ASOS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.ASOS, message=str(ex))
         return
 
     try:
@@ -200,7 +200,7 @@ def parse_asos():
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ASOS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.ASOS, message=str(ex))
         return
 
     df = pd.concat(df_list)
@@ -210,5 +210,5 @@ def parse_asos():
         df = sort_and_save(df)
         save_output_after(shop=Shop.ASOS, df=df, now=now)
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ASOS, message=str(ex))
         return

@@ -90,7 +90,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                                                       taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
                                                       url="https://www.tkmaxx.com/uk/" + node['url']))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.TKMAXX, message=ex)
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.TKMAXX, message=str(ex), url=url)
             i += 1
             if i >= number_of_pages:
                 break
@@ -98,7 +98,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
         print("{} - {}".format(last_level, len(df)))
         return df
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=str(ex), url=url)
     return None
 
 
@@ -125,7 +125,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str) -> pd.DataFrame:
 
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=str(ex), url=url)
     return None
 
 
@@ -161,7 +161,7 @@ def parse_tkmaxx():
         df_url = get_categories()
         print(len(df_url))
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.TKMAXX, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.TKMAXX, message=str(ex))
         return
 
     try:
@@ -171,7 +171,7 @@ def parse_tkmaxx():
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.TKMAXX, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.TKMAXX, message=str(ex))
         return
 
     df = pd.concat(df_list)
@@ -181,6 +181,6 @@ def parse_tkmaxx():
         df = sort_and_save(df)
         save_output_after(shop=Shop.TKMAXX, df=df, now=now)
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=ex)
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=str(ex))
         return
 

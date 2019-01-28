@@ -47,7 +47,7 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, taxo4: str, output: [], url: 
                             price = tmp_price
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.GAP,
-                              message="PARSE JSON FOR PRICE{}: {}".format(url, ex))
+                              message="PARSE JSON FOR PRICE{}: {}".format(url, ex), url=url)
             output.append(add_in_dictionary(shop=Shop.GAP,
                                             obj_id=node['id'],
                                             reference=node['uuid'],
@@ -60,7 +60,7 @@ def parse_json(taxo1: str, taxo2: str, taxo3: str, taxo4: str, output: [], url: 
                                             taxo4=taxo4,
                                             url=None))
         except Exception as ex:
-            log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="PARSE JSON {}: {}".format(url, ex))
+            log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="PARSE JSON {}: {}".format(url, ex), url=url)
     return output
 
 
@@ -115,7 +115,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
             try:
                 products.append(node["data-loopproducthit"])
             except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="HTML parsing: {}".format(ex))
+                log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="HTML parsing: {}".format(ex), url=url)
 
         products = GapListProductsAlreadyParsedSingleton.instance().get_product_list(products)
         if len(products) == 0:
@@ -136,7 +136,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                                         output=output,
                                         url=url)
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex), url=url)
 
         if i % 40 != 0:
             url = url[:-3] + BASE_URL_END
@@ -148,11 +148,11 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                                     output=output,
                                     url=url)
             except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex))
+                log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="LOAD JSON: {}".format(ex), url=url)
 
         return pd.DataFrame(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=str(ex), url=url)
 
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> pd.DataFrame:
@@ -178,7 +178,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> p
 
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=str(ex), url=url)
     return None
 
 
@@ -229,7 +229,7 @@ def parse_gap():
         # put sales categories at the end
         df_url = sort_categories(df=df_url)
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.GAP, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.GAP, message=str(ex))
         return
 
     try:
@@ -240,7 +240,7 @@ def parse_gap():
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.GAP, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.GAP, message=str(ex))
         return
 
     df = pd.concat(df_list)

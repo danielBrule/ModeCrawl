@@ -18,52 +18,52 @@ try:
     print("Parse {}".format(Shop.JOHNLEWIS.value))
     parse_john_lewis()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.JOHNLEWIS, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.JOHNLEWIS, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.ASOS.value))
     parse_asos()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.ASOS, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.ASOS, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.HM.value))
     parse_hm()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.HM, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.HM, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.MS.value))
     parse_ms()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.MS, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.MS, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.NEWLOOK.value))
     parse_newlook()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.NEWLOOK, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.NEWLOOK, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.PRIMARK.value))
     parse_primark()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.PRIMARK, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.PRIMARK, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.ZARA.value))
     parse_zara()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.ZARA, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.ZARA, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.GAP.value))
     parse_gap()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.GAP, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.GAP, message=str(ex))
 
 try:
     print("Parse {}".format(Shop.TKMAXX.value))
     parse_tkmaxx()
 except Exception as ex:
-    log_error(level=ErrorLevel.MAJOR, shop=Shop.TKMAXX, message=ex)
+    log_error(level=ErrorLevel.MAJOR, shop=Shop.TKMAXX, message=str(ex))

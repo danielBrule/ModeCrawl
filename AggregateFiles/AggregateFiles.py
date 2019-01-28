@@ -38,7 +38,7 @@ def read_files(shop: Shop) -> pd.DataFrame:
     return df
 
 
-def create_output_df(df_man: pd.DataFrame, df_woman: pd.DataFrame, shop: Shop) -> pd.DataFrame:
+def create_output_df(df_man: pd.DataFrame, df_woman: pd.DataFrame) -> pd.DataFrame:
     df = pd.concat([df_man, df_woman], sort=False)
     df = df.drop(["taxo2", "taxo3"], axis='columns')
     df = df.rename({"new_taxo3": "taxo3"}, axis='columns')
@@ -57,7 +57,6 @@ def create_output_df(df_man: pd.DataFrame, df_woman: pd.DataFrame, shop: Shop) -
     df.loc[df.taxo3 == taxo_lvl3.WOMEN_SKIRTS.value, "taxo2"] = taxo_lvl2.BOTTOM.value
     df.loc[df.taxo3 == taxo_lvl3.WOMEN_JEANS.value, "taxo2"] = taxo_lvl2.BOTTOM.value
 
-    tmp = df[df.taxo3 != ""]
     return df
 
 
@@ -193,7 +192,6 @@ def get_clean_MS(shop: Shop) -> pd.DataFrame:
     df_woman = df[df.taxo1 == taxo_lvl1.WOMAN.value].copy()
 
     return taxonomise_by_regexp(df_man=df_man, df_woman=df_woman, shop=shop)
-
 
 
 def get_clean_NEWLOOK(shop: Shop) -> pd.DataFrame:

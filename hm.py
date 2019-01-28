@@ -46,9 +46,10 @@ def get_inventory(taxo1: str, url: str):
 
         results = html.findAll(name="form", attrs={"class": "js-product-filter-form"})
         if len(results) > 1:
-            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="more than one node: {}".format(results))
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="more than one node: {}".format(results),
+                      url=url)
         if len(results) == 0:
-            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="empty node")
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.HM, message="empty node", url=url)
             return None
         json_url = "https://www2.hm.com" + results[0].attrs["data-filtered-products-url"] + "?page-size=999"
         data = simple_get(json_url)
@@ -78,11 +79,11 @@ def get_inventory(taxo1: str, url: str):
                                                   taxo4=tmp_taxo4,
                                                   url="https://www2.hm.com/" + node["swatches"][0]["articleLink"]))
             except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=ex)
+                log_error(level=ErrorLevel.MINOR, shop=Shop.HM, message=str(ex), url=url)
         return pd.DataFrame(products)
 
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.HM, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.HM, message=str(ex), url=url)
     return None
 
 
@@ -116,7 +117,7 @@ def parse_hm():
     try:
         df_url = get_categories()
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.HM, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.HM, message=str(ex))
         return
     print(len(df_url))
     try:
@@ -124,7 +125,7 @@ def parse_hm():
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.HM, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.HM, message=str(ex))
         return
 
     df = pd.concat(df_list)
@@ -135,5 +136,5 @@ def parse_hm():
         df = sort_and_save(df)
         save_output_after(shop=Shop.HM, df=df, now=now)
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.HM, message=ex)
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.HM, message=str(ex))
         return

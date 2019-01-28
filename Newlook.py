@@ -94,13 +94,13 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str, has_last_leve
                                                       taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
                                                       url="https://www.newlook.com/" + node['url']))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.NEWLOOK, message=str(ex))
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.NEWLOOK, message=str(ex), url=url)
             i += 1
             if i >= number_of_pages:
                 break
         return pd.DataFrame(products)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=str(ex))
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=str(ex), url=url)
     return None
 
 
@@ -152,7 +152,7 @@ def get_inventory(taxo1, taxo2, taxo3, url: str) -> pd.DataFrame:
         return pd.concat(output)
 
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=str(ex))
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.NEWLOOK, message=str(ex), url=url)
     return None
 
 
@@ -200,7 +200,7 @@ def parse_newlook():
     try:
         df_url = get_categories()
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.NEWLOOK, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.NEWLOOK, message=str(ex))
         return
 
     try:
@@ -210,7 +210,7 @@ def parse_newlook():
                                  url=row["url"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.NEWLOOK, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.NEWLOOK, message=str(ex))
         return
 
     df = pd.concat(df_list)
@@ -220,6 +220,6 @@ def parse_newlook():
         df = sort_and_save(df)
         save_output_after(shop=Shop.NEWLOOK, df=df, now=now)
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=ex)
+        log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=str(ex))
         return
 parse_newlook()

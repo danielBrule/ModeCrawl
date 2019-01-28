@@ -82,11 +82,12 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                                                       url=url_product))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR,
-                              shop=Shop.JOHNLEWIS, message="Error spotlight page {} : {} ({})".format(i, node, ex))
+                              shop=Shop.JOHNLEWIS, message="Error spotlight page {} : {} ({})".format(i, node, ex),
+                              url=url)
 
         return pd.DataFrame(products)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.JOHNLEWIS, message=str(ex))
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.JOHNLEWIS, message=str(ex), url=url)
     return None
 
 
@@ -102,8 +103,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         filters = html.findAll(name="div", attrs={"class": "faceted-filters-accordion"})
 
         try:
-            for filter in filters:
-                data = ET.fromstring(str(filter))
+            for product_filter in filters:
+                data = ET.fromstring(str(product_filter))
                 if data[0].text.strip() == 'Product Type':
                     for subnode in data[1][0]:
                         name = subnode[0].text.strip()
@@ -111,7 +112,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                          last_level=name,
                                                          url=URL_JOHNLEWIS_HOME + subnode[0].attrib["href"]))
         except Exception as ex:
-            log_error(level=ErrorLevel.MINOR, shop=Shop.JOHNLEWIS, message=str(ex))
+            log_error(level=ErrorLevel.MINOR, shop=Shop.JOHNLEWIS, message=str(ex), url=url)
 
         if len(output) == 0:
             output.append(get_page_inventory(taxonomy=taxonomy,
@@ -120,16 +121,15 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.JOHNLEWIS, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.JOHNLEWIS, message=str(ex), url=url)
     return None
-
 
 
 def parse_john_lewis():
     try:
         df_url = get_categories()
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.JOHNLEWIS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.JOHNLEWIS, message=str(ex))
         return
 
     try:
@@ -139,7 +139,7 @@ def parse_john_lewis():
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.JOHNLEWIS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.JOHNLEWIS, message=str(ex))
         return
 
     df = pd.concat(df_list)

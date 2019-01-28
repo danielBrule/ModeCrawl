@@ -1,5 +1,5 @@
 from Parser.Utils import *
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup
 import pandas as pd
 import xml.etree.ElementTree as ET
 
@@ -80,10 +80,10 @@ def get_inventory(taxo1, taxo2, taxo3, category):
                                                       taxo3=taxo3,
                                                       url=""))
                 except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.PRIMARK, message=ex)
+                    log_error(level=ErrorLevel.MINOR, shop=Shop.PRIMARK, message=str(ex), url=category)
         return pd.DataFrame(products)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.PRIMARK, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.PRIMARK, message=str(ex), url=category)
     return None
 
 
@@ -92,7 +92,7 @@ def parse_primark():
         df_url = get_categories()
         df_url = df_url[df_url.taxo1.isin(["men", "women", "kids"])]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.PRIMARK, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.PRIMARK, message=str(ex))
         return
     print(len(df_url))
     try:
@@ -102,7 +102,7 @@ def parse_primark():
                                  category=row["category"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.PRIMARK, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.PRIMARK, message=str(ex))
         return
 
     df = pd.concat(df_list)

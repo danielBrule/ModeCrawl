@@ -78,14 +78,14 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                                                       url=url_product))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR,
-                              shop=Shop.MS, message="Error spotlight page {} : {} ({})".format(i, node, ex))
+                              shop=Shop.MS, message="Error spotlight page {} : {} ({})".format(i, node, ex), url=url)
 
             i += 1
             if i > nb_pages:
                 break
         return pd.DataFrame(products)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message=str(ex), url=url)
     return None
 
 
@@ -101,8 +101,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         filters = html.findAll(name="li", attrs={"class": "accordion__item"})
 
         try:
-            for filter in filters:
-                data = ET.fromstring(str(filter))
+            for product_filter in filters:
+                data = ET.fromstring(str(product_filter))
                 if data[1][0].text.strip() == 'Product Type':
                     for subnode in data[2][0]:
                         name = re.search('(.*).\(.*\)', subnode[1][0].text.strip(), re.IGNORECASE).group(1)
@@ -110,12 +110,12 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                          last_level=name,
                                                          url=URL_MS_HOME + subnode[1][0].attrib["href"]))
         except Exception as ex:
-            log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=ex)
+            log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=str(ex), url=url)
 
         if len(output) == 0:
             try:
-                for filter in filters:
-                    data = ET.fromstring(str(filter))
+                for product_filter  in filters:
+                    data = ET.fromstring(str(product_filter ))
                     if data[1][0].text.strip() == 'Categories' or \
                             data[1][0].text.strip() == 'Category':
                         for subnode in data[2][0]:
@@ -124,12 +124,12 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                              last_level=name,
                                                              url=URL_MS_HOME + subnode[1][0].attrib["href"]))
             except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=ex)
+                log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=str(ex), url=url)
 
         if len(output) == 0:
             try:
-                for filter in filters:
-                    data = ET.fromstring(str(filter))
+                for product_filter  in filters:
+                    data = ET.fromstring(str(product_filter ))
                     if data[1][0].text.strip() == 'Style':
                         for subnode in data[2][0]:
                             name = re.search('(.*).\(.*\)', subnode[1][0].text.strip(), re.IGNORECASE).group(1)
@@ -137,7 +137,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                              last_level=name,
                                                              url=URL_MS_HOME + subnode[1][0].attrib["href"]))
             except Exception as ex:
-                log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=ex)
+                log_error(level=ErrorLevel.MINOR, shop=Shop.MS, message=str(ex), url=url)
 
         if len(output) == 0:
             output.append(get_page_inventory(taxonomy=taxonomy,
@@ -146,7 +146,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
         return pd.concat(output)
     except Exception as ex:
-        log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message=ex)
+        log_error(level=ErrorLevel.MEDIUM, shop=Shop.MS, message=str(ex), url=url)
     return None
 
 
@@ -154,7 +154,7 @@ def parse_ms():
     try:
         df_url = get_categories()
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.MS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.MS, message=str(ex))
         return
 
     try:
@@ -164,7 +164,7 @@ def parse_ms():
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
-        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.MS, message=ex)
+        log_error(level=ErrorLevel.MAJOR_get_inventory, shop=Shop.MS, message=str(ex))
         return
 
     df = pd.concat(df_list)
