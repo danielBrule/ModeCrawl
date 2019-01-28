@@ -67,6 +67,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                 return None
 
             last_level = last_level.replace(" ", "%20")
+            last_level = last_level.replace("&", "%26")
             data = simple_get(
                 url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock%3Astyle%3A{}&fetchAll=true&page={}".format(
                     last_level, i), USER_AGENT)
@@ -101,14 +102,14 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
     return None
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> pd.DataFrame:
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str) -> pd.DataFrame:
     try:
         url = "https://www.tkmaxx.com/" + url
         print("url: {}".format(url))
 
         output = []
 
-        taxonomy = [taxo1, taxo2, taxo3, taxo4]
+        taxonomy = [taxo1, taxo2, taxo3]
         taxonomy = [x for x in taxonomy if x is not None]
 
         style_data = simple_get(url + "/autoLoad?q=&page=0", USER_AGENT)
@@ -182,3 +183,4 @@ def parse_tkmaxx():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=ex)
         return
+

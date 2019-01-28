@@ -63,6 +63,7 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str, has_last_leve
         if has_last_level:
             taxonomy.append(last_level)
             last_level = last_level.replace(" ", "%20")
+            last_level = last_level.replace("&", "%26")
         products = []
         i = 0
         while True:
@@ -221,3 +222,4 @@ def parse_newlook():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=ex)
         return
+parse_newlook()

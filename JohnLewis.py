@@ -37,18 +37,22 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
         taxonomy = taxonomy.copy()
         taxonomy.append(last_level)
 
-        i = 1
+        i = None
         products = []
         while True:
-            print(i)
-            url_prod = url + "?page={}".format(i)
+            if i is None:
+                url_prod = url
+                i = 1
+            else:
+                i += 8
+                url_prod = url + "?page={}".format(i)
             i = i + 1
             raw_html = simple_get(url_prod)
             html = BeautifulSoup(raw_html, 'html.parser')
 
             # get highlighted products
             spotlight_node = html.findAll(name="section", attrs={"class": "product-card"})
-            if len(spotlight_node) == 0:
+            if len(spotlight_node) == 0 or i > 200:
                 break
             for node in spotlight_node:
                 try:
@@ -118,6 +122,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.JOHNLEWIS, message=ex)
     return None
+
 
 
 def parse_john_lewis():

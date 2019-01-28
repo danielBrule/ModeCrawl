@@ -69,22 +69,50 @@ def get_categories() -> []:
     return df
 
 
+def get_subcategories(category_id: str) -> pd.DataFrame:
+    filters_raw = simple_get("https://www.zara.com/uk/en/category/{}/filters?ajax=true".format(category_id), USER_AGENT)
+    filters = json.loads(filters_raw)
+    output = []
+    for filter in filters["filters"]:
+        if filter["id"] != "features":
+            continue
+        for category in filter["value"]:
+            category_name = category["value"]
+            for product in category["catentries"]:
+                output.append({"category": category_name,
+                               "productID": product})
+    df = pd.DataFrame(output)
+    print("category: {}".format(set(df["category"])))
+    df = df.drop_duplicates(subset=['productID'], keep="first")
+    return df
+
+
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
     print("url: {}".format(url))
-    raw_html = simple_get(url, USER_AGENT)
-    html = BeautifulSoup(raw_html, 'html.parser')
-
-    pattern = re.compile(r"window.zara.dataLayer\s+=\s+(\{.*?\});window.zara.viewPayload = window.zara.dataLayer")
-    scripts = html.find_all("script", text=pattern)
     try:
+        raw_html = simple_get(url, USER_AGENT)
+        html = BeautifulSoup(raw_html, 'html.parser')
+        taxonomy = [taxo1, taxo2, taxo3]
+        taxonomy = [x for x in taxonomy if x is not None]
+
+        category_id = re.search('"catGroupId":([0-9]+),', str(html)).group(1)
+        df_subcategories = get_subcategories(category_id=category_id)
+
+        pattern = re.compile(r"window.zara.dataLayer\s+=\s+(\{.*?\});window.zara.viewPayload = window.zara.dataLayer")
+        scripts = html.find_all("script", text=pattern)
         products = []
         print("scripts {}".format(len(scripts)))
         for script in scripts:
             data = pattern.search(script.text).group(1)
             data = json.loads(data)
-            print(len(data["productGroups"][0]["products"]))
             for node in data["productGroups"][0]["products"]:
                 try:
+                    taxonomy_copy = taxonomy.copy()
+                    try:
+                        taxonomy_copy.append(
+                            df_subcategories.loc[df_subcategories.productID == node["id"], "category"].iloc[0])
+                    except:
+                        pass
                     if "price" in node:
                         products.append(add_in_dictionary(shop=Shop.ZARA,
                                                           obj_id=node["id"],
@@ -92,9 +120,10 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                           name=node["name"],
                                                           price=node["price"],
                                                           in_stock=True,
-                                                          taxo1=taxo1,
-                                                          taxo2=taxo2,
-                                                          taxo3=taxo3,
+                                                          taxo1=taxonomy_copy[0] if len(taxonomy_copy) >= 1 else None,
+                                                          taxo2=taxonomy_copy[1] if len(taxonomy_copy) >= 2 else None,
+                                                          taxo3=taxonomy_copy[2] if len(taxonomy_copy) >= 3 else None,
+                                                          taxo4=taxonomy_copy[3] if len(taxonomy_copy) >= 4 else None,
                                                           url=""))
                     else:
                         products.append(add_in_dictionary(shop=Shop.ZARA,
@@ -103,9 +132,10 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                                                           name=node["bundleProductSummaries"][0]["name"],
                                                           price=node["bundleProductSummaries"][0]["price"],
                                                           in_stock=True,
-                                                          taxo1=taxo1,
-                                                          taxo2=taxo2,
-                                                          taxo3=taxo3,
+                                                          taxo1=taxonomy_copy[0] if len(taxonomy_copy) >= 1 else None,
+                                                          taxo2=taxonomy_copy[1] if len(taxonomy_copy) >= 2 else None,
+                                                          taxo3=taxonomy_copy[2] if len(taxonomy_copy) >= 3 else None,
+                                                          taxo4=taxonomy_copy[3] if len(taxonomy_copy) >= 4 else None,
                                                           url=""))
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.ZARA, message=ex)
