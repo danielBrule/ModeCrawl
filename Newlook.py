@@ -166,7 +166,7 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
                       {"operator": Comparison.EQUAL,
                        "value":
                            ["brands", "collection", "department", "viewall", "image", "petite", "tall", "curves",
-                            "dept", "oc", "newin", "collections", "departmentt", ""]
+                            "dept", "oc", "newin", "collections", "departmentt", "", "knitwear"]
                        },
                   "taxo4":
                       {"operator": Comparison.EQUAL,

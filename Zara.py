@@ -109,8 +109,10 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                 try:
                     taxonomy_copy = taxonomy.copy()
                     try:
-                        taxonomy_copy.append(
-                            df_subcategories.loc[df_subcategories.productID == node["id"], "category"].iloc[0])
+                        id = node["id"]
+                        if df_subcategories[df_subcategories.productID.isin([id])].empty:
+                            id = node["marketingMetaInfo"]["mappingInfo"][0]["regions"][0]["link"]["id"]
+                        taxonomy_copy.append(df_subcategories.loc[df_subcategories.productID == id, "category"].iloc[0])
                     except:
                         pass
                     if "price" in node:
@@ -146,17 +148,23 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
 
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
-    conditions = {"taxo2":
-                      {"operator": Comparison.IN,
-                       "value":
-                           ["FROM ", "Shoes | Bags", "NEW IN", "Collection", "Basics", "DRESS TIME", "JOIN LIFE",
-                            "MUM", "MUST HAVE", "None"]
-                       }
-                  }
+    conditions_1 = {"taxo2":
+                        {"operator": Comparison.IN,
+                         "value":
+                             ["FROM ", "Shoes | Bags", "NEW IN", "Collection", "Basics", "DRESS TIME", "JOIN LIFE",
+                              "MUM", "MUST HAVE", "None", "KNITWEAR", "Flats", " OFF", "JOIN LIFE", "None"]
+                         }
+                    }
+    conditions_2 = {"taxo3":
+                        {"operator": Comparison.EQUAL,
+                         "value":
+                             ["View All"]
+                         }
+                    }
+    output_1 = split_and_sort(df=df, true_first=False, conditions=conditions_1)
+    output_0 = split_and_sort(df=output_1[0], true_first=False, conditions=conditions_2)
 
-    output = split_and_sort(df=df, true_first=False, conditions=conditions)
-
-    df = pd.concat([output[0], output[1]], sort=False)
+    df = pd.concat([output_0[0], output_0[1], output_1[1]], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
 
@@ -188,4 +196,5 @@ def parse_zara():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ZARA, message=ex)
         return
+
 
