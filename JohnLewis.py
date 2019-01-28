@@ -16,8 +16,8 @@ def get_categories() -> pd.DataFrame:
     for result in results:
         root_node = ET.fromstring(str(result))
         if "href" in root_node.attrib and \
-                (root_node.attrib["href"].startswith("/browse/men/") or \
-                 root_node.attrib["href"].startswith("/browse/women/") or \
+                (root_node.attrib["href"].startswith("/browse/men/") or
+                 root_node.attrib["href"].startswith("/browse/women/") or
                  root_node.attrib["href"].startswith("/browse/baby-child/")):
             url = root_node.attrib["href"]
             taxonomy = url.split("/")

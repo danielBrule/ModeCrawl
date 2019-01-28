@@ -119,7 +119,7 @@ def taxonomise_by_regexp(df_man: pd.DataFrame, df_woman: pd.DataFrame, shop: Sho
     df_woman = do_taxonomy(df=df_woman, value="dress", taxo=taxo_lvl3.WOMEN_DRESS)
     df_woman = do_taxonomy(df=df_woman, value="jeans", taxo=taxo_lvl3.WOMEN_JEANS)
 
-    return create_output_df(df_man, df_woman, shop)
+    return create_output_df(df_man, df_woman)
 
 
 def get_clean_ASOS(shop: Shop) -> pd.DataFrame:
@@ -148,7 +148,7 @@ def get_clean_ASOS(shop: Shop) -> pd.DataFrame:
     df_woman.loc[df_woman.taxo2 == "dresses", "new_taxo3"] = taxo_lvl3.WOMEN_DRESS.value
     df_woman.loc[df_woman.taxo2 == "jeans", "new_taxo3"] = taxo_lvl3.WOMEN_JEANS.value
 
-    return create_output_df(df_man, df_woman, shop)
+    return create_output_df(df_man, df_woman)
 
 
 def get_clean_HM(shop: Shop) -> pd.DataFrame:
@@ -175,7 +175,7 @@ def get_clean_HM(shop: Shop) -> pd.DataFrame:
     df_woman.loc[df_woman.taxo2 == "dresses", "new_taxo3"] = taxo_lvl3.WOMEN_DRESS.value
     df_woman.loc[df_woman.taxo2 == "jeans", "new_taxo3"] = taxo_lvl3.WOMEN_JEANS.value
 
-    return create_output_df(df_man, df_woman, shop)
+    return create_output_df(df_man, df_woman)
 
 
 def get_clean_MS(shop: Shop) -> pd.DataFrame:
@@ -263,7 +263,7 @@ def get_clean_PRIMARK(shop: Shop) -> pd.DataFrame:
     df_woman.loc[df_woman.taxo2 == "Dresses", "new_taxo3"] = taxo_lvl3.WOMEN_DRESS.value
     df_woman.loc[df_woman.taxo2 == "Jeans", "new_taxo3"] = taxo_lvl3.WOMEN_JEANS.value
 
-    return create_output_df(df_man, df_woman, shop)
+    return create_output_df(df_man, df_woman)
 
 
 def get_clean_TKMAXX(shop: Shop) -> pd.DataFrame:
