@@ -96,14 +96,11 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
         taxonomy.append(last_level)
         products = []
 
-
         if 'parentCategory' in url:
-            url = url[:url.rfind("/")+1]
-
+            url = url[:url.rfind("/") + 1]
 
         raw_html = simple_get(url)
         html = BeautifulSoup(raw_html, 'html.parser')
-
         nb_item = re.findall('([0-9]+) item', str(html), re.IGNORECASE)[0]
 
         url = url + "/?sz={}&start=0&format=page-element".format(nb_item)
@@ -118,7 +115,8 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                 log_error(level=ErrorLevel.MINOR, shop=Shop.GAP, message="HTML parsing: {}".format(ex), url=url)
 
         products = GapListProductsAlreadyParsedSingleton.instance().get_product_list(products)
-        if len(products) == 0:
+
+        if products is None or len(products) == 0:
             return None
         url = BASE_URL
         i = 0
@@ -165,18 +163,27 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> p
         taxonomy = [x for x in taxonomy if x is not None]
 
         raw_html = simple_get(url)
+        if raw_html is None:
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.GAP, message="error 404", url=url)
+            return None
         html = BeautifulSoup(raw_html, 'html.parser')
 
         category_node = html.findAll(name="a", attrs={"class": "category-name"})
-        for position in range (len(category_node) - 1, -1, -1):
+        if len(category_node) == 0:
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.GAP, message="empty page", url=url)
+            return None
+        for position in range(len(category_node) - 1, -1, -1):
             xml_node = ET.fromstring(str(category_node[position]))
             if "href" in xml_node.attrib:
                 output.append(get_page_inventory(taxonomy=taxonomy,
                                                  last_level=xml_node.text.strip(),
                                                  url=URL_GAP_HOME + xml_node.attrib["href"]))
 
-
-        return pd.concat(output)
+        output = [x for x in output if x is not None]
+        if len(output) == 0:
+            return None
+        else:
+            return pd.concat(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.GAP, message=str(ex), url=url)
     return None
@@ -189,7 +196,7 @@ def sort_categories(df: pd.DataFrame) -> pd.DataFrame:
                             },
                        "taxo2":
                            {"operator": Comparison.START_WITH,
-                            "value": ["last-", "up-to-","sale", "deals", "new-and-now"]
+                            "value": ["last-", "up-to-", "sale", "deals", "new-and-now"]
                             },
                        "taxo3":
                            {"operator": Comparison.START_WITH,

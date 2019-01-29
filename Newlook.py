@@ -40,12 +40,14 @@ def get_categories_per_gender(category_url: str) -> pd.DataFrame:
     df["taxo6"] = new[6]
 
     df = df.loc[df["taxo1"].isin(["womens", "mens", "teens"])]
-    df = df.loc[
-        df["taxo2"].isin(["accessories", "clothing", "footwear", "bagsaccessories", "backtoschool", "essentials",
-                          "curves", "goingout", "maternity", "petite", "tall"])]
-    df["taxo3"] = df.apply(lambda row: row["taxo4"] if pd.isnull(row["taxo3"]) or row["taxo3"] == "department" or
+    df = df.loc[df["taxo2"].isin(["accessories", "clothing", "footwear", "bagsaccessories", "backtoschool",
+                                  "essentials", "curves", "goingout", "maternity", "petite", "tall"])]
+    df["taxo3"] = df.apply(lambda row: row["taxo4"] if pd.isnull(row["taxo3"]) or
+                                                       row["taxo3"] == "department" or
                                                        row["taxo3"] == "department" else row["taxo3"],
                            axis=1)
+
+    df = df.loc[~df["taxo3"].isin(["collections", "collection", "image", "new", "newin", "oc"])]
 
     return df
 
@@ -191,9 +193,6 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
     df = pd.concat([output[0], output2[0], output2[1]], sort=False)
     df = df.drop_duplicates(subset=['id', 'reference', 'name'], keep="first")
     return df
-
-
-
 
 
 def parse_newlook():

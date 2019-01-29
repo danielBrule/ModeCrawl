@@ -94,17 +94,21 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
         html = BeautifulSoup(raw_html, 'html.parser')
         taxonomy = [taxo1, taxo2, taxo3]
         taxonomy = [x for x in taxonomy if x is not None]
-
-        category_id = re.search('"catGroupId":([0-9]+),', str(html)).group(1)
-        df_subcategories = get_subcategories(category_id=category_id)
+        try:
+            category_id = re.search('"catGroupId":([0-9]+),', str(html)).group(1)
+            df_subcategories = get_subcategories(category_id=category_id)
+        except Exception as ex:
+            log_error(level=ErrorLevel.INFORMATION, shop=Shop.ZARA, message="No sub category", url=url)
 
         pattern = re.compile(r"window.zara.dataLayer\s+=\s+(\{.*?\});window.zara.viewPayload = window.zara.dataLayer")
         scripts = html.find_all("script", text=pattern)
         products = []
-        print("scripts {}".format(len(scripts)))
         for script in scripts:
             data = pattern.search(script.text).group(1)
             data = json.loads(data)
+            if "productGroups" not in data:
+                log_error(level=ErrorLevel.INFORMATION, shop=Shop.ZARA, message="No elements", url=url)
+                continue
             for node in data["productGroups"][0]["products"]:
                 try:
                     taxonomy_copy = taxonomy.copy()
@@ -112,33 +116,31 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
                         product_id = node["id"]
                         if df_subcategories[df_subcategories.productID.isin([product_id])].empty:
                             product_id = node["marketingMetaInfo"]["mappingInfo"][0]["regions"][0]["link"]["id"]
-                        taxonomy_copy.append(df_subcategories.loc[df_subcategories.productID == product_id, "category"].iloc[0])
+                        taxonomy_copy.append(
+                            df_subcategories.loc[df_subcategories.productID == product_id, "category"].iloc[0])
                     except:
                         pass
                     if "price" in node:
-                        products.append(add_in_dictionary(shop=Shop.ZARA,
-                                                          obj_id=node["id"],
-                                                          reference=node["detail"]["reference"],
-                                                          name=node["name"],
-                                                          price=node["price"],
-                                                          in_stock=True,
-                                                          taxo1=taxonomy_copy[0] if len(taxonomy_copy) >= 1 else None,
-                                                          taxo2=taxonomy_copy[1] if len(taxonomy_copy) >= 2 else None,
-                                                          taxo3=taxonomy_copy[2] if len(taxonomy_copy) >= 3 else None,
-                                                          taxo4=taxonomy_copy[3] if len(taxonomy_copy) >= 4 else None,
-                                                          url=""))
+                        name = node["name"],
+                        price = node["price"]
+                    elif "bundleProductSummaries" in node and len(node["bundleProductSummaries"]) > 0:
+                        name = node["bundleProductSummaries"][0]["name"],
+                        price = node["bundleProductSummaries"][0]["price"]
                     else:
-                        products.append(add_in_dictionary(shop=Shop.ZARA,
-                                                          obj_id=node["id"],
-                                                          reference=node["detail"]["reference"],
-                                                          name=node["bundleProductSummaries"][0]["name"],
-                                                          price=node["bundleProductSummaries"][0]["price"],
-                                                          in_stock=True,
-                                                          taxo1=taxonomy_copy[0] if len(taxonomy_copy) >= 1 else None,
-                                                          taxo2=taxonomy_copy[1] if len(taxonomy_copy) >= 2 else None,
-                                                          taxo3=taxonomy_copy[2] if len(taxonomy_copy) >= 3 else None,
-                                                          taxo4=taxonomy_copy[3] if len(taxonomy_copy) >= 4 else None,
-                                                          url=""))
+                        log_error(level=ErrorLevel.INFORMATION, shop=Shop.ZARA, message="no price/name", url=url)
+                        continue
+                    products.append(add_in_dictionary(shop=Shop.ZARA,
+                                                      obj_id=node["id"],
+                                                      reference=node["detail"]["reference"],
+                                                      name=name,
+                                                      price=price,
+                                                      in_stock=True,
+                                                      taxo1=taxonomy_copy[0] if len(taxonomy_copy) >= 1 else None,
+                                                      taxo2=taxonomy_copy[1] if len(taxonomy_copy) >= 2 else None,
+                                                      taxo3=taxonomy_copy[2] if len(taxonomy_copy) >= 3 else None,
+                                                      taxo4=taxonomy_copy[3] if len(taxonomy_copy) >= 4 else None,
+                                                      url=""))
+
                 except Exception as ex:
                     log_error(level=ErrorLevel.MINOR, shop=Shop.ZARA, message=str(ex), url=url)
         return pd.DataFrame(products)
@@ -196,5 +198,3 @@ def parse_zara():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.ZARA, message=str(ex))
         return
-
-

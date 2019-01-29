@@ -36,8 +36,10 @@ def get_categories() -> pd.DataFrame:
         output.append({"taxo1": taxonomy[0],
                        "taxo2": (taxonomy[1] if len(taxonomy) > 1 else None),
                        "taxo3": (taxonomy[2] if len(taxonomy) > 2 else None),
+                       "taxo4": (taxonomy[3] if len(taxonomy) > 3 else None),
                        "URL": url})
     output = pd.DataFrame(output)
+    # clean taxo1
     output["is_subcat"] = output.apply(lambda my_row:
                                        True
                                        if "men" in my_row["taxo1"].lower() or
@@ -48,15 +50,42 @@ def get_categories() -> pd.DataFrame:
     output = output.loc[output['is_subcat'] == True].copy()
     output = output.drop(["is_subcat"], axis=1)
 
-    return output
+    # clean taxo 2
+    output = output.dropna(subset=["taxo2"])
 
+    output["is_subcat"] = output.apply(lambda my_row:
+                                       True
+                                       if my_row["taxo2"].lower().startswith("new-in-") or
+                                          my_row["taxo2"].lower().startswith("gold-label-") or
+                                          my_row["taxo2"].lower().startswith("mod-box-") or
+                                          my_row["taxo2"].lower().endswith("-holiday-shop")
+                                       else False,
+                                       axis=1)
+    output = output.loc[output['is_subcat'] == False].copy()
+    output = output.drop(["is_subcat"], axis=1)
+
+    output = output.loc[~output["taxo2"].isin(["beauty", "formal-wear", "biggest-savings",
+                                               "last-chance", "big-brand-delivery", "leather-shop"])]
+
+    # clean taxo 3
+    output["is_subcat"] = output.apply(lambda my_row:
+                                       True
+                                        if my_row["taxo2"].lower().startswith("new-in-") or
+                                            "fragrance+grooming" == my_row["taxo2"].lower()
+                                       else False,
+                                       axis=1)
+    output = output.loc[output['is_subcat'] == False].copy()
+    output = output.drop(["is_subcat"], axis=1)
+
+    return output
 
 
 def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFrame:
     try:
         print(last_level)
         taxonomy = taxonomy.copy()
-        taxonomy.append(last_level)
+        if last_level is not None:
+            taxonomy.append(last_level)
         products = []
         i = 0
         while True:
@@ -66,12 +95,15 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
             if "The page you were looking for does not exist" in html:
                 return None
 
-            last_level = last_level.replace(" ", "%20")
-            last_level = last_level.replace("&", "%26")
-            data = simple_get(
-                url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock%3Astyle%3A{}&fetchAll=true&page={}".format(
-                    last_level, i), USER_AGENT)
-
+            if last_level is not None:
+                last_level = last_level.replace(" ", "%20")
+                last_level = last_level.replace("&", "%26")
+                data = simple_get(
+                    url + "/autoLoad?q=&sort=publishedDate-desc&facets=stockLevelStatus%3AinStock%3Astyle%3A{}&fetchAll=true&page={}".format(
+                        last_level, i), USER_AGENT)
+            else:
+                data = simple_get(
+                    url + "/autoLoad?q=&sort=publishedDate-desc&fetchAll=true&page={}".format(i), USER_AGENT)
             data = json.loads(data)
 
             number_of_pages = data['pagination']['numberOfPages']
@@ -95,40 +127,42 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
             if i >= number_of_pages:
                 break
         df = pd.DataFrame(products)
-        print("{} - {}".format(last_level, len(df)))
         return df
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=str(ex), url=url)
     return None
 
 
-def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str) -> pd.DataFrame:
+def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> pd.DataFrame:
     try:
         url = "https://www.tkmaxx.com/" + url
         print("url: {}".format(url))
 
         output = []
 
-        taxonomy = [taxo1, taxo2, taxo3]
+        taxonomy = [taxo1, taxo2, taxo3, taxo3]
         taxonomy = [x for x in taxonomy if x is not None]
 
         style_data = simple_get(url + "/autoLoad?q=&page=0", USER_AGENT)
 
         data = json.loads(style_data)
 
-        for node in data['facets']:
-            if node["code"] == 'style':
-                for style_node in node["values"]:
-                    output.append(get_page_inventory(taxonomy=taxonomy,
-                                                     last_level=style_node["code"],
-                                                     url=url))
+        if len(taxonomy) < 4:
+            for node in data['facets']:
+                if node["code"] == 'style':
+                    for style_node in node["values"]:
+                        output.append(get_page_inventory(taxonomy=taxonomy,
+                                                         last_level=style_node["code"],
+                                                         url=url))
 
+        if len(output) == 0:
+            output.append(get_page_inventory(taxonomy=taxonomy,
+                                             last_level=None,
+                                             url=url))
         return pd.concat(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=str(ex), url=url)
     return None
-
-
 
 
 def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
@@ -159,7 +193,6 @@ def sort_and_save(df: pd.DataFrame) -> pd.DataFrame:
 def parse_tkmaxx():
     try:
         df_url = get_categories()
-        print(len(df_url))
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_get_category, shop=Shop.TKMAXX, message=str(ex))
         return
@@ -168,6 +201,7 @@ def parse_tkmaxx():
         df_list = [get_inventory(taxo1=row["taxo1"],
                                  taxo2=row["taxo2"],
                                  taxo3=row["taxo3"],
+                                 taxo4=row["taxo4"],
                                  url=row["URL"])
                    for index, row in df_url.iterrows()]
     except Exception as ex:
@@ -183,4 +217,3 @@ def parse_tkmaxx():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.TKMAXX, message=str(ex))
         return
-

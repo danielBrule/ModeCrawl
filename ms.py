@@ -114,8 +114,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
         if len(output) == 0:
             try:
-                for product_filter  in filters:
-                    data = ET.fromstring(str(product_filter ))
+                for product_filter in filters:
+                    data = ET.fromstring(str(product_filter))
                     if data[1][0].text.strip() == 'Categories' or \
                             data[1][0].text.strip() == 'Category':
                         for subnode in data[2][0]:
@@ -128,8 +128,8 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, url: str):
 
         if len(output) == 0:
             try:
-                for product_filter  in filters:
-                    data = ET.fromstring(str(product_filter ))
+                for product_filter in filters:
+                    data = ET.fromstring(str(product_filter))
                     if data[1][0].text.strip() == 'Style':
                         for subnode in data[2][0]:
                             name = re.search('(.*).\(.*\)', subnode[1][0].text.strip(), re.IGNORECASE).group(1)
