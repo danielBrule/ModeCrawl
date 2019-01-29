@@ -16,7 +16,7 @@ class ErrorLevel(Enum):
     MEDIUM = "MEDIUM"
     MINOR = "MINOR"
     INFORMATION = "INFORMATION"
-
+    TIMING = "TIMING"
 
 class Shop(Enum):
     ASOS = "ASOS"
@@ -66,7 +66,7 @@ def simple_get(url: str, header: str = None):
         return None
 
 
-def log_error(level: ErrorLevel, shop: Shop, message: str, url: str=None):
+def log_error(level: ErrorLevel, shop: Shop, message: str, url: str = None):
     # if ErrorLevel != ErrorLevel.MINOR:
     if url is None:
         print("{} - {} - {}".format(datetime.datetime.now(), level.name, shop.name))
@@ -75,26 +75,24 @@ def log_error(level: ErrorLevel, shop: Shop, message: str, url: str=None):
 
     file = open(os.path.join(DIRECTORY_ERROR, "errors.txt"), "a")
     if url is None:
-        file.write("{} - {} - {} \n".format(datetime.datetime.now(), level.name, shop.name))
+        file.write("{} - {} - {} - {} \n".format(datetime.datetime.now(), level.name, message, shop.name))
     else:
-        file.write("{} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, shop.name, url))
+        file.write("{} - {} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, message, shop.name, url))
     file.close()
 
     file = open(os.path.join(DIRECTORY_ERROR, shop.name + "_errors.txt"), "a")
     if url is None:
-        file.write("{} - {}\n".format(datetime.datetime.now(), level.name))
+        file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, message))
     else:
-        file.write("{} - {} ({})\n".format(datetime.datetime.now(), level.name, url))
-    file.write("{}\n".format(message))
+        file.write("{} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, message, url))
     file.close()
 
-    if ErrorLevel != ErrorLevel.MAJOR:
-        file = open(os.path.join(DIRECTORY_ERROR, "_MAJOR_errors.txt"), "a")
-        if url is None:
-            file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name, url))
-        else:
-            file.write("{} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, shop.name, url))
-        file.close()
+    file = open(os.path.join(DIRECTORY_ERROR, (level.name + "_errors.txt")), "a")
+    if url is None:
+        file.write("{} - {} - {}\n".format(datetime.datetime.now(), level.name, shop.name, url))
+    else:
+        file.write("{} - {} - {} ({})\n".format(datetime.datetime.now(), level.name, shop.name, url))
+    file.close()
 
 
 def save_output_before(shop: Shop, df: pd.DataFrame, now):

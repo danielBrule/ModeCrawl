@@ -222,4 +222,3 @@ def parse_newlook():
     except Exception as ex:
         log_error(level=ErrorLevel.MAJOR_save, shop=Shop.NEWLOOK, message=str(ex))
         return
-parse_newlook()
