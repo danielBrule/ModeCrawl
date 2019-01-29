@@ -70,8 +70,8 @@ def get_categories() -> pd.DataFrame:
     # clean taxo 3
     output["is_subcat"] = output.apply(lambda my_row:
                                        True
-                                        if my_row["taxo2"].lower().startswith("new-in-") or
-                                            "fragrance+grooming" == my_row["taxo2"].lower()
+                                       if my_row["taxo2"].lower().startswith("new-in-") or
+                                          "fragrance+grooming" == my_row["taxo2"].lower()
                                        else False,
                                        axis=1)
     output = output.loc[output['is_subcat'] == False].copy()
@@ -82,7 +82,10 @@ def get_categories() -> pd.DataFrame:
 
 def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFrame:
     try:
-        print(last_level)
+        try:
+            print(last_level)
+        except:
+            pass
         taxonomy = taxonomy.copy()
         if last_level is not None:
             taxonomy.append(last_level)
@@ -91,10 +94,8 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
         while True:
             raw_html = simple_get(url, USER_AGENT)
             html = BeautifulSoup(raw_html, 'html.parser')
-
             if "The page you were looking for does not exist" in html:
                 return None
-
             if last_level is not None:
                 last_level = last_level.replace(" ", "%20")
                 last_level = last_level.replace("&", "%26")
@@ -105,29 +106,32 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
                 data = simple_get(
                     url + "/autoLoad?q=&sort=publishedDate-desc&fetchAll=true&page={}".format(i), USER_AGENT)
             data = json.loads(data)
-
             number_of_pages = data['pagination']['numberOfPages']
-            for node in data["results"]:
-                try:
-                    products.append(add_in_dictionary(shop=Shop.TKMAXX,
-                                                      obj_id=node['code'],
-                                                      reference=None,
-                                                      name=node['label'],
-                                                      price=node['price']['value'],
-                                                      in_stock=True if node['stockLevelStatus'] == "inStock"
-                                                      else False,
-                                                      taxo1=taxonomy[0] if len(taxonomy) >= 1 else None,
-                                                      taxo2=taxonomy[1] if len(taxonomy) >= 2 else None,
-                                                      taxo3=taxonomy[2] if len(taxonomy) >= 3 else None,
-                                                      taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
-                                                      url="https://www.tkmaxx.com/uk/" + node['url']))
-                except Exception as ex:
-                    log_error(level=ErrorLevel.MINOR, shop=Shop.TKMAXX, message=str(ex), url=url)
+            if "results" in data:
+                for node in data["results"]:
+                    try:
+                        products.append(add_in_dictionary(shop=Shop.TKMAXX,
+                                                          obj_id=node['code'],
+                                                          reference=None,
+                                                          name=node['label'],
+                                                          price=node['price']['value'],
+                                                          in_stock=True if node['stockLevelStatus'] == "inStock"
+                                                          else False,
+                                                          taxo1=taxonomy[0] if len(taxonomy) >= 1 else None,
+                                                          taxo2=taxonomy[1] if len(taxonomy) >= 2 else None,
+                                                          taxo3=taxonomy[2] if len(taxonomy) >= 3 else None,
+                                                          taxo4=taxonomy[3] if len(taxonomy) >= 4 else None,
+                                                          url="https://www.tkmaxx.com/uk/" + node['url']))
+                    except Exception as ex:
+                        log_error(level=ErrorLevel.MINOR, shop=Shop.TKMAXX, message=str(ex), url=url)
             i += 1
             if i >= number_of_pages:
                 break
-        df = pd.DataFrame(products)
-        return df
+        products = [x for x in products if x is not None]
+        if len(products) == 0:
+            return None
+        else:
+            return pd.DataFrame(products)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=str(ex), url=url)
     return None
@@ -135,7 +139,6 @@ def get_page_inventory(taxonomy: [str], last_level: str, url: str) -> pd.DataFra
 
 def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> pd.DataFrame:
     try:
-        url = "https://www.tkmaxx.com/" + url
         print("url: {}".format(url))
 
         output = []
@@ -147,7 +150,7 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> p
 
         data = json.loads(style_data)
 
-        if len(taxonomy) < 4:
+        if len(taxonomy) < 4 and "facets" in data:
             for node in data['facets']:
                 if node["code"] == 'style':
                     for style_node in node["values"]:
@@ -159,7 +162,11 @@ def get_inventory(taxo1: str, taxo2: str, taxo3: str, taxo4: str, url: str) -> p
             output.append(get_page_inventory(taxonomy=taxonomy,
                                              last_level=None,
                                              url=url))
-        return pd.concat(output)
+        output = [x for x in output if x is not None]
+        if len(output) == 0:
+            return None
+        else:
+            return pd.concat(output)
     except Exception as ex:
         log_error(level=ErrorLevel.MEDIUM, shop=Shop.TKMAXX, message=str(ex), url=url)
     return None
